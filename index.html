@@ -1,0 +1,1577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<title>Mad Machine Workshop</title>
+<style>
+  :root {
+    --paper: #f4ead5;
+    --paper-2: #ebdfc1;
+    --ink: #2a2118;
+    --accent: #ef4444;
+    --accent-2: #f59e0b;
+    --good: #10b981;
+    --shadow: 0 4px 0 rgba(0,0,0,.18);
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    font-family: "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+  body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: 64px 1fr 84px;
+    grid-template-areas:
+      "header header"
+      "bin    shop"
+      "bin    controls";
+  }
+  @media (max-width: 700px) {
+    body { grid-template-columns: 160px 1fr; }
+  }
+  header {
+    grid-area: header;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px;
+    background: #2a2118;
+    color: #fff8e7;
+    border-bottom: 4px solid #1a140d;
+  }
+  header h1 {
+    margin: 0; font-size: 22px; letter-spacing: .5px;
+    text-shadow: 2px 2px 0 #000;
+  }
+  header h1 .squiggle { color: #fbbf24; }
+  header .machine-name {
+    font-size: 14px;
+    background: #1a140d;
+    border: 2px dashed #5b4a33;
+    padding: 4px 12px;
+    border-radius: 999px;
+    min-width: 240px; text-align: center;
+    color: #fbbf24;
+  }
+  @media (max-width: 700px) {
+    header .machine-name { display: none; }
+  }
+
+  /* Parts bin */
+  .bin {
+    grid-area: bin;
+    background: var(--paper-2);
+    border-right: 4px solid #c9b88c;
+    padding: 12px 10px;
+    overflow-y: auto; overflow-x: hidden;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .bin h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: #6b5a3e; margin: 4px 0 10px 4px;
+  }
+  .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bin-item {
+    aspect-ratio: 1;
+    background: #fff8e7;
+    border: 2px solid #2a2118;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    display: grid; place-items: center;
+    cursor: grab;
+    position: relative;
+    transition: transform .12s ease;
+    touch-action: none;
+  }
+  .bin-item:hover { transform: translateY(-2px) rotate(-2deg); }
+  .bin-item:active { cursor: grabbing; }
+  .bin-item svg { width: 70%; height: 70%; pointer-events: none; }
+  .bin-item .label {
+    position: absolute; bottom: -2px; left: 0; right: 0;
+    text-align: center; font-size: 10px; color: #6b5a3e;
+    pointer-events: none;
+  }
+  .bin-item.danger { border-color: #dc2626; box-shadow: 0 4px 0 #7f1d1d, 0 0 8px rgba(220,38,38,.3); }
+
+  /* Workshop */
+  .shop {
+    grid-area: shop;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(rgba(120,90,40,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,90,40,.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+    touch-action: none;
+  }
+  .shop::before, .shop::after {
+    content: ""; position: absolute; width: 56px; height: 56px;
+    background: radial-gradient(circle at 35% 30%, #d6d6d6, #4a4a4a 60%, #1a1a1a);
+    border-radius: 50%;
+    box-shadow: inset -4px -6px 8px rgba(0,0,0,.5), 0 2px 0 rgba(0,0,0,.3);
+    pointer-events: none;
+  }
+  .shop::before { top: 10px; left: 10px; }
+  .shop::after { bottom: 10px; right: 10px; }
+  .shop .hint {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    color: #a08866; font-size: 22px; pointer-events: none;
+    transition: opacity .3s;
+    text-align: center; padding: 0 40px;
+  }
+  .shop.has-parts .hint { opacity: 0; }
+
+  .part {
+    position: absolute;
+    width: 90px; height: 90px;
+    cursor: grab;
+    touch-action: none;
+    z-index: 2;
+    transition: filter .15s;
+    will-change: transform;
+  }
+  .part:hover { filter: drop-shadow(0 0 4px #fbbf24); }
+  .part.dragging { cursor: grabbing; z-index: 999; filter: drop-shadow(0 6px 4px rgba(0,0,0,.3)); }
+  .part .core { width: 100%; height: 100%; display: block; }
+  .part .del {
+    position: absolute; top: -10px; right: -10px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: white;
+    border: 3px solid white; font-weight: bold; font-size: 18px;
+    display: grid; place-items: center; cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,.3);
+    line-height: 1; z-index: 3;
+  }
+  body.running .part .del { display: none !important; }
+  body.running .part { cursor: default; }
+  body.running .bin-item { opacity: .4; pointer-events: none; }
+  body.running .part[data-kind="marble"] { z-index: 50; }
+
+  /* Controls */
+  .controls {
+    grid-area: controls;
+    background: #2a2118;
+    border-top: 4px solid #1a140d;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 0 12px;
+    overflow-x: auto;
+    touch-action: pan-x;
+  }
+  .btn {
+    font-family: inherit;
+    font-weight: bold;
+    border-radius: 14px;
+    border: 3px solid #1a140d;
+    box-shadow: 0 4px 0 #1a140d;
+    cursor: pointer;
+    transition: transform .08s, box-shadow .08s;
+    color: white;
+    white-space: nowrap;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a140d; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-run { background: var(--good); font-size: 26px; padding: 14px 36px; }
+  .btn-run.is-running { background: var(--accent); }
+  .btn-clear { background: var(--accent-2); font-size: 18px; padding: 12px 22px; }
+  .btn-surprise { background: #ec4899; font-size: 18px; padding: 12px 22px; }
+  .btn-icon {
+    background: #6366f1;
+    font-size: 18px; padding: 10px 12px;
+    min-width: 44px; min-height: 44px;
+    display: inline-grid; place-items: center;
+  }
+  .btn-undo { background: #14b8a6; }
+  .count {
+    color: #fbbf24; font-size: 13px; margin-right: auto;
+    flex-shrink: 0;
+  }
+  @media (max-width: 700px) {
+    .count { display: none; }
+    .btn-run { font-size: 22px; padding: 12px 24px; }
+    .btn-clear, .btn-surprise { font-size: 14px; padding: 10px 14px; }
+  }
+
+  /* History panel */
+  .history-panel {
+    position: fixed;
+    right: -340px; top: 64px; bottom: 84px;
+    width: 320px;
+    background: var(--paper-2);
+    border-left: 4px solid #c9b88c;
+    transition: right .3s ease;
+    z-index: 200;
+    display: flex; flex-direction: column;
+    box-shadow: -6px 0 20px rgba(0,0,0,.2);
+    touch-action: auto;
+  }
+  .history-panel.open { right: 0; }
+  .history-panel > header {
+    background: #2a2118; color: #fff8e7;
+    padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 4px solid #1a140d;
+  }
+  .history-panel > header h3 { margin: 0; font-size: 16px; color: #fbbf24; }
+  .panel-close {
+    background: var(--accent); color: white;
+    border: 2px solid white; border-radius: 50%;
+    width: 30px; height: 30px; font-size: 18px; font-weight: bold;
+    cursor: pointer; padding: 0;
+    display: grid; place-items: center; line-height: 1;
+    touch-action: manipulation;
+  }
+  .history-list {
+    list-style: none; padding: 8px; margin: 0;
+    overflow-y: auto; flex: 1;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .history-list li {
+    background: #fff8e7;
+    border: 2px solid #2a2118;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: transform .1s, background .1s;
+    display: flex; justify-content: space-between; align-items: center;
+    touch-action: manipulation;
+  }
+  .history-list li:hover { background: #fde68a; transform: translateX(-2px); }
+  .history-list li .step { font-weight: bold; color: #2a2118; }
+  .history-list li .info { font-size: 11px; color: #6b5a3e; }
+  .history-list .empty {
+    text-align: center; color: #a08866; padding: 30px 10px;
+    font-size: 14px;
+  }
+
+  /* Share/Save modal */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(42, 33, 24, 0.7);
+    display: grid; place-items: center;
+    z-index: 1000;
+    touch-action: auto;
+    padding: 12px;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: var(--paper);
+    border: 4px solid #2a2118;
+    border-radius: 18px;
+    width: min(520px, 100%);
+    max-height: 92vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  .modal > header {
+    background: #2a2118; color: #fff8e7;
+    padding: 12px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal > header h3 { margin: 0; color: #fbbf24; font-size: 18px; }
+  .modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section label {
+    display: block; font-size: 14px; color: #6b5a3e;
+    margin-bottom: 6px; font-weight: bold;
+  }
+  .modal textarea {
+    width: 100%;
+    min-height: 70px;
+    border: 2px solid #c9b88c;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+    touch-action: auto;
+    user-select: text;
+    -webkit-user-select: text;
+    background: #fff8e7;
+    color: #2a2118;
+  }
+  .modal-btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .modal-btn {
+    font-size: 14px; padding: 10px 16px;
+  }
+  .modal-msg {
+    margin-top: 10px; font-size: 13px;
+    min-height: 18px;
+  }
+  .modal-msg.success { color: #16a34a; font-weight: bold; }
+  .modal-msg.error { color: #dc2626; font-weight: bold; }
+  .modal hr {
+    border: none; border-top: 2px dashed #c9b88c;
+    margin: 16px 0;
+  }
+
+  /* Animations */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin-rev { to { transform: rotate(-360deg); } }
+  @keyframes bounce-y {
+    0%,100% { transform: translateY(0) scaleY(1); }
+    25%     { transform: translateY(-14px) scaleY(.85); }
+    50%     { transform: translateY(0) scaleY(1.1); }
+    75%     { transform: translateY(-6px) scaleY(.95); }
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-8deg); }
+    50%     { transform: rotate(8deg); }
+  }
+  @keyframes flip {
+    0%,100% { transform: rotate(0); }
+    50%     { transform: rotate(180deg); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translate(0,0) rotate(0); }
+    20% { transform: translate(-3px,2px) rotate(-3deg); }
+    40% { transform: translate(3px,-1px) rotate(2deg); }
+    60% { transform: translate(-2px,-2px) rotate(-1deg); }
+    80% { transform: translate(2px,1px) rotate(2deg); }
+  }
+  @keyframes glow {
+    0%,100% { filter: drop-shadow(0 0 0 #fff) brightness(1); }
+    50%     { filter: drop-shadow(0 0 18px #fde047) brightness(1.4); }
+  }
+  @keyframes drive {
+    0%,100% { transform: translateX(-30px); }
+    50%     { transform: translateX(30px); }
+  }
+  @keyframes wave {
+    0%,100% { transform: translateY(0) rotate(-4deg); }
+    50%     { transform: translateY(-8px) rotate(4deg); }
+  }
+  @keyframes stretch {
+    0%,100% { transform: scaleY(1) scaleX(1); }
+    50%     { transform: scaleY(1.3) scaleX(.85); }
+  }
+  @keyframes roll {
+    0%   { transform: translateX(-50px) rotate(0deg); }
+    50%  { transform: translateX(50px)  rotate(360deg); }
+    100% { transform: translateX(-50px) rotate(0deg); }
+  }
+  @keyframes bubble {
+    0%,100% { transform: scale(1) translateY(0); filter: brightness(1); }
+    50%     { transform: scale(1.05) translateY(-2px); filter: brightness(1.3); }
+  }
+  @keyframes rumble {
+    0%,100% { transform: translate(0,0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(2px, -1px); }
+    75% { transform: translate(-1px, 2px); }
+  }
+  @keyframes train-ride {
+    0%   { offset-distance: 0%; }
+    100% { offset-distance: 100%; }
+  }
+
+  .active.anim-spin     .core { animation: spin 1.5s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-spinfast .core { animation: spin .35s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-spinrev  .core { animation: spin-rev 2s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-bounce   .core { animation: bounce-y .6s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-wiggle   .core { animation: wiggle .4s ease-in-out infinite; transform-origin: 50% 50%; }
+  .active.anim-flip     .core { animation: flip 1s ease-in-out infinite; transform-origin: 50% 70%; }
+  .active.anim-shake    .core { animation: shake .15s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-glow     .core { animation: glow .9s ease-in-out infinite; }
+  .active.anim-drive    .core { animation: drive 2s ease-in-out infinite; }
+  .active.anim-wave     .core { animation: wave .7s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-stretch  .core { animation: stretch .5s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-roll     .core { animation: roll 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
+  .active.anim-bubble   .core { animation: bubble 1s ease-in-out infinite; }
+  .active.anim-rumble   .core { animation: rumble .12s linear infinite; }
+
+  body.running header h1 .squiggle { animation: wiggle .2s infinite; display: inline-block; }
+
+  @keyframes hitpop {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.25); filter: brightness(1.6) drop-shadow(0 0 10px #fde047); }
+    100% { transform: scale(1); }
+  }
+  .part.hit .core { animation: hitpop .25s ease-out !important; }
+
+  /* Confetti */
+  .confetti {
+    position: absolute; width: 8px; height: 8px;
+    pointer-events: none;
+    border-radius: 2px;
+  }
+  .particle {
+    position: absolute; width: 8px; height: 8px;
+    pointer-events: none;
+    border-radius: 50%;
+    z-index: 100;
+    margin-left: -4px; margin-top: -4px;
+  }
+  .fireball {
+    position: absolute;
+    width: 28px; height: 28px;
+    background: radial-gradient(circle, #fef3c7, #fbbf24 30%, #dc2626 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 60;
+    box-shadow: 0 0 12px #f59e0b, 0 0 24px rgba(220,38,38,.6);
+    margin-left: -14px; margin-top: -14px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔧 Mad Machine Workshop <span class="squiggle">~*~</span></h1>
+  <div class="machine-name" id="machineName">untitled contraption</div>
+</header>
+
+<aside class="bin">
+  <h2>Junk Drawer</h2>
+  <div class="bin-grid" id="binGrid"></div>
+</aside>
+
+<section class="shop" id="shop">
+  <div class="hint">← tap any thingy to add it!<br><small style="font-size:14px">drop a marble and press RUN ✨</small></div>
+</section>
+
+<footer class="controls">
+  <div class="count" id="count">0 parts</div>
+  <button class="btn btn-icon btn-undo" id="undoBtn" title="Undo">↶</button>
+  <button class="btn btn-icon" id="historyBtn" title="History">📜</button>
+  <button class="btn btn-icon" id="shareBtn" title="Save / Load">💾</button>
+  <button class="btn btn-icon" id="soundBtn" title="Sound">🔊</button>
+  <button class="btn btn-surprise" id="surpriseBtn">🎲 Surprise!</button>
+  <button class="btn btn-clear" id="clearBtn">💥 Clear</button>
+  <button class="btn btn-run" id="runBtn">▶ RUN!</button>
+</footer>
+
+<aside class="history-panel" id="historyPanel">
+  <header>
+    <h3>📜 History (last 30)</h3>
+    <button class="panel-close" id="historyClose">×</button>
+  </header>
+  <ul class="history-list" id="historyList"></ul>
+</aside>
+
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal">
+    <header>
+      <h3>💾 Save / Load your build</h3>
+      <button class="panel-close" id="modalClose">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="modal-section">
+        <label for="exportText">Copy this code to save your build:</label>
+        <textarea id="exportText" readonly></textarea>
+        <div class="modal-btn-row">
+          <button class="btn btn-icon modal-btn" id="copyBtn">📋 Copy code</button>
+        </div>
+      </div>
+      <hr/>
+      <div class="modal-section">
+        <label for="importText">Paste a code here to load:</label>
+        <textarea id="importText" placeholder="paste your code here..."></textarea>
+        <div class="modal-btn-row">
+          <button class="btn btn-surprise modal-btn" id="loadBtn">✨ Load it!</button>
+        </div>
+        <div class="modal-msg" id="loadMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// PART DEFINITIONS
+// ============================================================================
+// flags:
+//   anim: CSS animation class active when part has .active
+//   voice: VOICES key for sound
+//   custom: special rendering hook (e.g. brio train)
+//   bouncy: marbles bounce off harder
+//   lava: destroys marbles/fireballs on contact (doesn't bounce them)
+//   fireproof: not destroyed by fireballs
+//   erupts: spawns fireballs while running
+
+const PARTS = {
+  gear: {
+    name: "Gear", anim: "anim-spin", voice: "whirr",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <g fill="#8b5cf6" stroke="#2a2118" stroke-width="3" stroke-linejoin="round">
+        <path d="M50 8 l8 10 12-3 4 12 12 4 -3 12 10 8 -10 8 3 12 -12 4 -4 12 -12-3 -8 10 -8-10 -12 3 -4-12 -12-4 3-12 -10-8 10-8 -3-12 12-4 4-12 12 3z"/>
+        <circle cx="50" cy="50" r="14" fill="#2a2118"/>
+        <circle cx="50" cy="50" r="6" fill="#fbbf24"/>
+      </g>
+    </svg>`
+  },
+  wheel: {
+    name: "Wheel", anim: "anim-roll", voice: "whirr",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <circle cx="50" cy="50" r="40" fill="#a16207" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="50" cy="50" r="32" fill="#b45309" stroke="#78350f" stroke-width="2"/>
+      <g stroke="#78350f" stroke-width="4" stroke-linecap="round">
+        <line x1="50" y1="14" x2="50" y2="86"/>
+        <line x1="14" y1="50" x2="86" y2="50"/>
+        <line x1="24" y1="24" x2="76" y2="76"/>
+        <line x1="76" y1="24" x2="24" y2="76"/>
+      </g>
+      <circle cx="50" cy="50" r="10" fill="#2a2118" stroke="#fbbf24" stroke-width="2"/>
+      <circle cx="50" cy="50" r="3" fill="#fbbf24"/>
+    </svg>`
+  },
+  spring: {
+    name: "Spring", anim: "anim-bounce", voice: "boing",
+    bouncy: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <g fill="none" stroke="#94a3b8" stroke-width="6" stroke-linecap="round">
+        <path d="M25 90 H75 M25 80 H75 M25 68 H75 M25 56 H75 M25 44 H75 M25 32 H75 M25 20 H75"/>
+        <path d="M25 90 V20 M75 90 V20" stroke="#475569" stroke-width="3"/>
+      </g>
+      <rect x="20" y="14" width="60" height="8" fill="#475569" stroke="#2a2118" stroke-width="2"/>
+    </svg>`
+  },
+  cable: {
+    name: "Cable", anim: "anim-wiggle", voice: "buzz",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M15 80 C 25 20, 40 90, 50 50 S 75 10, 90 30"
+            stroke="#ef4444" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M15 80 C 25 20, 40 90, 50 50 S 75 10, 90 30"
+            stroke="#fbbf24" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="2 6"/>
+      <circle cx="15" cy="80" r="6" fill="#2a2118"/>
+      <circle cx="90" cy="30" r="6" fill="#2a2118"/>
+    </svg>`
+  },
+  whisk: {
+    name: "Whisk", anim: "anim-spinfast", voice: "whisk",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <rect x="44" y="8" width="12" height="34" rx="3" fill="#78350f" stroke="#2a2118" stroke-width="2"/>
+      <rect x="42" y="38" width="16" height="6" fill="#9ca3af" stroke="#2a2118" stroke-width="2"/>
+      <g fill="none" stroke="#9ca3af" stroke-width="3" stroke-linecap="round">
+        <path d="M50 44 Q 20 60, 50 92"/>
+        <path d="M50 44 Q 80 60, 50 92"/>
+        <path d="M50 44 Q 30 70, 50 92"/>
+        <path d="M50 44 Q 70 70, 50 92"/>
+        <path d="M50 44 V 92"/>
+      </g>
+    </svg>`
+  },
+  spatula: {
+    name: "Spatula", anim: "anim-flip", voice: "flap",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <rect x="44" y="50" width="12" height="46" rx="3" fill="#78350f" stroke="#2a2118" stroke-width="2"/>
+      <rect x="20" y="20" width="60" height="36" rx="6" fill="#dc2626" stroke="#2a2118" stroke-width="3"/>
+      <g stroke="#7f1d1d" stroke-width="2">
+        <line x1="30" y1="28" x2="30" y2="48"/>
+        <line x1="42" y1="28" x2="42" y2="48"/>
+        <line x1="54" y1="28" x2="54" y2="48"/>
+        <line x1="66" y1="28" x2="66" y2="48"/>
+      </g>
+    </svg>`
+  },
+  fan: {
+    name: "Fan", anim: "anim-spinrev", voice: "windy",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <g fill="#3b82f6" stroke="#2a2118" stroke-width="3">
+        <ellipse cx="50" cy="24" rx="10" ry="22"/>
+        <ellipse cx="76" cy="50" rx="22" ry="10"/>
+        <ellipse cx="50" cy="76" rx="10" ry="22"/>
+        <ellipse cx="24" cy="50" rx="22" ry="10"/>
+      </g>
+      <circle cx="50" cy="50" r="10" fill="#2a2118"/>
+      <circle cx="50" cy="50" r="4" fill="#fbbf24"/>
+    </svg>`
+  },
+  box: {
+    name: "Cardboard", anim: "anim-shake", voice: "thud",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M10 30 L50 12 L90 30 L50 48 Z" fill="#d97706" stroke="#2a2118" stroke-width="3"/>
+      <path d="M10 30 V80 L50 96 V48 Z" fill="#b45309" stroke="#2a2118" stroke-width="3"/>
+      <path d="M90 30 V80 L50 96 V48 Z" fill="#92400e" stroke="#2a2118" stroke-width="3"/>
+      <path d="M30 58 H70 M30 68 H70 M40 78 H60" stroke="#451a03" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  },
+  duplo: {
+    name: "Duplo", anim: "anim-glow", voice: "ping",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <rect x="14" y="34" width="72" height="50" rx="4" fill="#ef4444" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="34" cy="34" rx="14" ry="6" fill="#dc2626" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="66" cy="34" rx="14" ry="6" fill="#dc2626" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="34" cy="28" rx="14" ry="6" fill="#f87171" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="66" cy="28" rx="14" ry="6" fill="#f87171" stroke="#2a2118" stroke-width="3"/>
+      <text x="50" y="65" font-size="12" text-anchor="middle" fill="#fff" font-family="sans-serif">DUPLO</text>
+    </svg>`
+  },
+  brio: {
+    name: "Brio", anim: "", voice: "chug", custom: "brio",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 8 70 Q 50 5, 92 70" stroke="#a16207" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <path d="M 8 70 Q 50 5, 92 70" stroke="#fbbf24" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="3 6"/>
+      <circle cx="8" cy="70" r="6" fill="#78350f"/>
+      <circle cx="92" cy="70" r="6" fill="#78350f"/>
+    </svg>`
+  },
+  knex: {
+    name: "K'nex", anim: "anim-wave", voice: "click",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <rect x="18" y="46" width="64" height="10" rx="3" fill="#16a34a" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="18" cy="51" r="10" fill="#fbbf24" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="82" cy="51" r="10" fill="#fbbf24" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="18" cy="51" r="3" fill="#2a2118"/>
+      <circle cx="82" cy="51" r="3" fill="#2a2118"/>
+      <rect x="46" y="20" width="8" height="60" rx="2" fill="#3b82f6" stroke="#2a2118" stroke-width="2"/>
+    </svg>`
+  },
+  car: {
+    name: "Toy car", anim: "anim-drive", voice: "vroom",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M10 70 L20 50 L40 40 L70 40 L90 60 L90 70 Z" fill="#06b6d4" stroke="#2a2118" stroke-width="3"/>
+      <rect x="38" y="44" width="22" height="14" fill="#7dd3fc" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="28" cy="72" r="9" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="72" cy="72" r="9" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="28" cy="72" r="3" fill="#9ca3af"/>
+      <circle cx="72" cy="72" r="3" fill="#9ca3af"/>
+    </svg>`
+  },
+  rubber: {
+    name: "Rubber band", anim: "anim-stretch", voice: "twang",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <ellipse cx="50" cy="60" rx="34" ry="20" fill="none" stroke="#e11d48" stroke-width="10"/>
+      <ellipse cx="50" cy="60" rx="34" ry="20" fill="none" stroke="#fbcfe8" stroke-width="3"/>
+    </svg>`
+  },
+  marble: {
+    name: "Marble", anim: "", voice: "plink",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <circle cx="50" cy="50" r="38" fill="#3b82f6" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="50" cy="50" r="32" fill="#60a5fa"/>
+      <ellipse cx="40" cy="38" rx="14" ry="10" fill="#dbeafe" opacity=".8"/>
+      <circle cx="34" cy="34" r="5" fill="#fff"/>
+    </svg>`
+  },
+  lava: {
+    name: "Lava bucket", anim: "anim-bubble", voice: "sizzle",
+    lava: true, fireproof: true, danger: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 22 30 Q 50 6 78 30" fill="none" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 18 30 L 28 88 H 72 L 82 30 Z" fill="#6b7280" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="50" cy="30" rx="32" ry="6" fill="#4b5563" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="50" cy="30" rx="28" ry="5" fill="#dc2626"/>
+      <ellipse cx="50" cy="29" rx="22" ry="4" fill="#f59e0b"/>
+      <ellipse cx="50" cy="28" rx="14" ry="2" fill="#fde047"/>
+      <circle cx="40" cy="30" r="2" fill="#fde047" opacity="0.8"/>
+      <circle cx="58" cy="31" r="1.8" fill="#fde047" opacity="0.7"/>
+      <circle cx="50" cy="28" r="1.2" fill="#fff" opacity="0.7"/>
+    </svg>`
+  },
+  volcano: {
+    name: "Volcano", anim: "anim-rumble", voice: "boom",
+    erupts: true, fireproof: true, danger: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 6 92 L 34 25 L 66 25 L 94 92 Z" fill="#78350f" stroke="#2a2118" stroke-width="3"/>
+      <path d="M 42 25 L 35 70 L 28 90" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+      <path d="M 58 25 L 65 65 L 72 88" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="50" cy="26" rx="17" ry="4" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
+      <ellipse cx="50" cy="25" rx="13" ry="3" fill="#dc2626"/>
+      <ellipse cx="50" cy="24" rx="8" ry="2" fill="#fde047"/>
+      <circle cx="48" cy="14" r="6" fill="#9ca3af" opacity="0.6"/>
+      <circle cx="40" cy="6" r="4" fill="#d1d5db" opacity="0.5"/>
+      <circle cx="58" cy="8" r="5" fill="#9ca3af" opacity="0.5"/>
+    </svg>`
+  }
+};
+
+// ============================================================================
+// AUDIO
+// ============================================================================
+let audioCtx = null;
+let soundOn = true;
+function ac() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone({ freq = 440, type = "sine", dur = 0.2, vol = 0.15, slide = 0, delay = 0 }) {
+  if (!soundOn) return;
+  const ctx = ac();
+  const t0 = ctx.currentTime + delay;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, freq + slide), t0 + dur);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(ctx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function noise({ dur = 0.2, vol = 0.1, delay = 0, filter = 800 }) {
+  if (!soundOn) return;
+  const ctx = ac();
+  const t0 = ctx.currentTime + delay;
+  const buf = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = filter;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(f).connect(g).connect(ctx.destination);
+  src.start(t0); src.stop(t0 + dur + 0.02);
+}
+const VOICES = {
+  whirr:  d => { for (let i = 0; i < 6; i++) tone({ freq: 220 + Math.random()*40, type:"sawtooth", dur:.4, vol:.04, delay: d + i*.4 }); },
+  boing:  d => tone({ freq: 600, type:"sine", dur:.3, vol:.2, slide: -400, delay: d }),
+  buzz:   d => tone({ freq: 90, type:"square", dur:1.5, vol:.05, delay: d }),
+  whisk:  d => noise({ dur: 1.5, vol: .07, filter: 2000, delay: d }),
+  flap:   d => { tone({ freq: 200, type:"triangle", dur:.1, vol:.15, delay: d }); tone({ freq: 160, type:"triangle", dur:.1, vol:.15, delay: d+.5 }); },
+  thud:   d => { for (let i = 0; i < 4; i++) noise({ dur:.1, vol:.12, filter:200, delay: d + i*.3 }); },
+  ping:   d => tone({ freq: 1320, type:"sine", dur:.4, vol:.1, delay: d }),
+  chug:   d => { for (let i = 0; i < 8; i++) tone({ freq: 110, type:"square", dur:.08, vol:.1, delay: d + i*.18 }); },
+  click:  d => { for (let i = 0; i < 5; i++) tone({ freq: 1800, type:"square", dur:.02, vol:.08, delay: d + i*.3 }); },
+  vroom:  d => tone({ freq: 180, type:"sawtooth", dur:1.2, vol:.08, slide: 60, delay: d }),
+  windy:  d => noise({ dur: 2, vol: .06, filter: 500, delay: d }),
+  twang:  d => tone({ freq: 300, type:"triangle", dur:.4, vol:.15, slide: -100, delay: d }),
+  plink:  d => tone({ freq: 1500, type:"sine", dur:.1, vol:.12, slide: -400, delay: d }),
+  sizzle: d => { noise({ dur:.5, vol:.12, filter: 3500, delay: d }); tone({ freq: 220, type:"sawtooth", dur:.3, vol:.08, slide:-100, delay: d }); },
+  boom:   d => { noise({ dur:.5, vol:.18, filter: 180, delay: d }); tone({ freq: 90, type:"sawtooth", dur:.4, vol:.14, slide:-50, delay: d }); }
+};
+
+// ============================================================================
+// BUILD THE BIN
+// ============================================================================
+const binGrid = document.getElementById("binGrid");
+for (const [key, p] of Object.entries(PARTS)) {
+  const el = document.createElement("div");
+  el.className = "bin-item" + (p.danger ? " danger" : "");
+  el.dataset.kind = key;
+  el.innerHTML = p.svg + `<span class="label">${p.name}</span>`;
+  binGrid.appendChild(el);
+}
+
+// ============================================================================
+// STATE
+// ============================================================================
+const shop = document.getElementById("shop");
+let nextId = 1;
+let dragging = null;
+let dragOffset = { x: 0, y: 0 };
+
+// ============================================================================
+// SPAWN & DRAG (coords are shop-local top-left)
+// ============================================================================
+function spawnPartLocal(kind, localX, localY, opts = {}) {
+  const p = PARTS[kind];
+  const el = document.createElement("div");
+  const id = nextId++;
+  el.className = "part " + (p.anim || "");
+  el.dataset.kind = kind;
+  el.dataset.id = id;
+  el.innerHTML = p.svg + `<div class="del" title="remove">×</div>`;
+
+  if (p.custom === "brio") {
+    const train = document.createElement("div");
+    train.style.cssText = `
+      position:absolute; left:0; top:0; width:16px; height:12px;
+      background:#dc2626; border:2px solid #2a2118; border-radius:3px;
+      offset-path: path('M 8 60 Q 45 5, 80 60');
+      animation: none; opacity: 0;`;
+    train.dataset.train = "1";
+    el.appendChild(train);
+  }
+
+  positionLocal(el, localX, localY);
+  shop.appendChild(el);
+  attachPartHandlers(el);
+  updateCount();
+  if (!opts.silent) saveAndPush();
+  return el;
+}
+
+function positionLocal(el, localX, localY) {
+  const sr = shop.getBoundingClientRect();
+  const w = 90, h = 90;
+  const cx = Math.max(0, Math.min(sr.width  - w, localX));
+  const cy = Math.max(0, Math.min(sr.height - h, localY));
+  el.style.left = cx + "px";
+  el.style.top  = cy + "px";
+}
+
+function spawnPartFromClient(kind, clientX, clientY) {
+  const sr = shop.getBoundingClientRect();
+  spawnPartLocal(kind, clientX - sr.left - 45, clientY - sr.top - 45);
+}
+
+function attachPartHandlers(el) {
+  el.addEventListener("pointerdown", (e) => {
+    if (e.target.classList.contains("del")) {
+      if (document.body.classList.contains("running")) return;
+      deletePart(el);
+      return;
+    }
+    if (document.body.classList.contains("running")) return;
+    dragging = el;
+    el.classList.add("dragging");
+    const r = el.getBoundingClientRect();
+    dragOffset = { x: e.clientX - r.left - 45, y: e.clientY - r.top - 45 };
+    el.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (dragging === el) {
+      const sr = shop.getBoundingClientRect();
+      positionLocal(el, e.clientX - sr.left - dragOffset.x - 45, e.clientY - sr.top - dragOffset.y - 45);
+    }
+  });
+  const release = () => {
+    if (dragging === el) {
+      el.classList.remove("dragging");
+      dragging = null;
+      saveAndPush();
+    }
+  };
+  el.addEventListener("pointerup", release);
+  el.addEventListener("pointercancel", release);
+}
+
+function deletePart(el) {
+  el.remove();
+  updateCount();
+  saveAndPush();
+}
+
+function spawnInShopRandom(kind) {
+  const sr = shop.getBoundingClientRect();
+  const localX = sr.width  * (0.25 + Math.random() * 0.5) - 45;
+  const localY = sr.height * (0.25 + Math.random() * 0.5) - 45;
+  spawnPartLocal(kind, localX, localY);
+}
+
+document.querySelectorAll(".bin-item").forEach(item => {
+  let didDrag = false;
+  let startX = 0, startY = 0;
+  item.addEventListener("pointerdown", (e) => {
+    if (document.body.classList.contains("running")) return;
+    didDrag = false;
+    startX = e.clientX; startY = e.clientY;
+    const kind = item.dataset.kind;
+    e.preventDefault();
+
+    const ghost = document.createElement("div");
+    ghost.className = "part";
+    ghost.style.cssText = `position:fixed; pointer-events:none; left:${e.clientX-45}px; top:${e.clientY-45}px; opacity:0; z-index:9999;`;
+    ghost.innerHTML = PARTS[kind].svg;
+    document.body.appendChild(ghost);
+
+    const move = (ev) => {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      if (!didDrag && (dx*dx + dy*dy) > 36) {
+        didDrag = true;
+        ghost.style.opacity = "1";
+        ghost.classList.add("dragging");
+      }
+      ghost.style.left = (ev.clientX - 45) + "px";
+      ghost.style.top  = (ev.clientY - 45) + "px";
+    };
+    const up = (ev) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      ghost.remove();
+      const sr = shop.getBoundingClientRect();
+      const inside = ev.clientX >= sr.left && ev.clientX <= sr.right
+                  && ev.clientY >= sr.top  && ev.clientY <= sr.bottom;
+      if (didDrag && inside)      spawnPartFromClient(kind, ev.clientX, ev.clientY);
+      else if (!didDrag)          spawnInShopRandom(kind);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  });
+});
+
+shop.addEventListener("pointerdown", () => {
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+});
+
+// ============================================================================
+// PHYSICS — marbles, fireballs, lava, volcano
+// ============================================================================
+let physicsHandle = null;
+let lastFrame = 0;
+let marbles   = []; // { el, x, y, vx, vy, origX, origY }
+let fireballs = []; // { el, x, y, vx, vy, life }
+const volcanoNext = new Map(); // partId -> next-eruption timestamp
+
+const PART_RADIUS   = 42;
+const MARBLE_RADIUS = 30;
+const FIREBALL_RADIUS = 14;
+const GRAVITY  = 0.5;
+const FRICTION = 0.995;
+
+function startPhysics() {
+  marbles.length = 0;
+  fireballs.length = 0;
+  volcanoNext.clear();
+
+  shop.querySelectorAll('.part[data-kind="marble"]').forEach(el => {
+    const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
+    marbles.push({
+      el, x, y,
+      vx: (Math.random() - 0.5) * 3,
+      vy: (Math.random() - 0.5) * 2,
+      origX: x, origY: y
+    });
+  });
+
+  // Always run physics if a volcano is present (it spawns fireballs), or marbles.
+  const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
+  if (!marbles.length && !hasVolcano) return;
+
+  lastFrame = performance.now();
+  physicsHandle = requestAnimationFrame(physicsLoop);
+}
+
+function stopPhysics() {
+  if (physicsHandle) cancelAnimationFrame(physicsHandle);
+  physicsHandle = null;
+  marbles.length = 0;
+  fireballs.forEach(f => f.el.remove());
+  fireballs.length = 0;
+  volcanoNext.clear();
+}
+
+function physicsLoop(now) {
+  const dt = Math.min(2, (now - lastFrame) / 16);
+  lastFrame = now;
+  const sr = shop.getBoundingClientRect();
+  const W = sr.width, H = sr.height;
+
+  const partEls = [...shop.querySelectorAll('.part:not([data-kind="marble"])')];
+  const obstacles = partEls.map(el => {
+    const x = parseFloat(el.style.left) || 0;
+    const y = parseFloat(el.style.top)  || 0;
+    return {
+      el, kind: el.dataset.kind,
+      cx: x + 45, cy: y + 45,
+      def: PARTS[el.dataset.kind]
+    };
+  });
+
+  // --- Volcano eruptions ---
+  obstacles.filter(o => o.def.erupts).forEach(v => {
+    const id = v.el.dataset.id;
+    const next = volcanoNext.get(id);
+    if (next == null) {
+      volcanoNext.set(id, now + 800 + Math.random() * 1200);
+    } else if (now >= next) {
+      eruptVolcano(v);
+      volcanoNext.set(id, now + 2200 + Math.random() * 1800);
+    }
+  });
+
+  // --- Marbles ---
+  const marblesToRemove = [];
+  marbles.forEach(m => {
+    m.vy += GRAVITY * dt;
+    m.vx *= FRICTION;
+    m.vy *= FRICTION;
+    m.x += m.vx * dt;
+    m.y += m.vy * dt;
+
+    if (m.x < 0)        { m.x = 0;        m.vx = Math.abs(m.vx) * 0.75; }
+    if (m.x > W - 90)   { m.x = W - 90;   m.vx = -Math.abs(m.vx) * 0.75; }
+    if (m.y < 0)        { m.y = 0;        m.vy = Math.abs(m.vy) * 0.75; }
+    if (m.y > H - 90) {
+      m.y = H - 90;
+      m.vy = -Math.abs(m.vy) * 0.7;
+      m.vx *= 0.9;
+      if (Math.abs(m.vy) < 1.5) m.vy = 0;
+    }
+
+    const mcx = m.x + 45, mcy = m.y + 45;
+    let consumed = false;
+    for (const o of obstacles) {
+      const dx = mcx - o.cx, dy = mcy - o.cy;
+      const dist = Math.hypot(dx, dy);
+      const minDist = MARBLE_RADIUS + PART_RADIUS;
+      if (dist >= minDist || dist === 0) continue;
+
+      if (o.def.lava) {
+        // marble drops in lava → poof
+        explodeMarble(m, ['#dc2626', '#f59e0b', '#fbbf24', '#fde047']);
+        VOICES.sizzle(0);
+        hitPart(o.el, true);
+        consumed = true;
+        break;
+      }
+      const overlap = minDist - dist;
+      const nx = dx / dist, ny = dy / dist;
+      m.x += nx * overlap;
+      m.y += ny * overlap;
+      const dot = m.vx * nx + m.vy * ny;
+      if (dot < 0) {
+        const restitution = o.def.bouncy ? 1.6 : 0.75;
+        m.vx -= (1 + restitution) * dot * nx;
+        m.vy -= (1 + restitution) * dot * ny;
+      }
+      hitPart(o.el);
+    }
+    if (consumed) { marblesToRemove.push(m); return; }
+
+    // marble-marble (lightweight)
+    marbles.forEach(other => {
+      if (other === m || other._dead) return;
+      const dx = (m.x + 45) - (other.x + 45);
+      const dy = (m.y + 45) - (other.y + 45);
+      const dist = Math.hypot(dx, dy);
+      const minDist = MARBLE_RADIUS * 2;
+      if (dist < minDist && dist > 0) {
+        const overlap = (minDist - dist) / 2;
+        const nx = dx / dist, ny = dy / dist;
+        m.x += nx * overlap;     m.y += ny * overlap;
+        other.x -= nx * overlap; other.y -= ny * overlap;
+        const dvx = m.vx - other.vx, dvy = m.vy - other.vy;
+        const dot = dvx * nx + dvy * ny;
+        if (dot < 0) {
+          m.vx -= dot * nx;     m.vy -= dot * ny;
+          other.vx += dot * nx; other.vy += dot * ny;
+        }
+      }
+    });
+
+    m.el.style.left = m.x + "px";
+    m.el.style.top  = m.y + "px";
+  });
+  marblesToRemove.forEach(m => { m._dead = true; });
+  marbles = marbles.filter(m => !m._dead);
+
+  // --- Fireballs ---
+  const fireballsToRemove = [];
+  fireballs.forEach(f => {
+    f.vy += GRAVITY * 0.6 * dt;
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+    f.life -= dt;
+
+    // wall: bottom kills, sides bounce (so they don't fly off)
+    if (f.x < 0)        { f.x = 0;     f.vx = Math.abs(f.vx) * 0.6; }
+    if (f.x > W)        { f.x = W;     f.vx = -Math.abs(f.vx) * 0.6; }
+    if (f.y > H + 20 || f.life <= 0) { fireballsToRemove.push(f); return; }
+
+    for (const o of obstacles) {
+      if (o.def.fireproof) continue; // volcano / lava aren't burned
+      const dx = f.x - o.cx, dy = f.y - o.cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist < FIREBALL_RADIUS + PART_RADIUS - 6) {
+        destroyByFire(o.el);
+        // remove from local obstacle list so the next fireball doesn't hit ghost
+        const i = obstacles.indexOf(o); if (i >= 0) obstacles.splice(i, 1);
+        fireballsToRemove.push(f);
+        break;
+      }
+    }
+    // also kill marbles
+    if (!fireballsToRemove.includes(f)) {
+      for (const m of marbles) {
+        if (m._dead) continue;
+        const dx = f.x - (m.x + 45), dy = f.y - (m.y + 45);
+        if (Math.hypot(dx, dy) < FIREBALL_RADIUS + MARBLE_RADIUS - 4) {
+          explodeMarble(m, ['#dc2626', '#fbbf24', '#7c2d12']);
+          m._dead = true;
+          fireballsToRemove.push(f);
+          break;
+        }
+      }
+    }
+
+    f.el.style.left = f.x + "px";
+    f.el.style.top  = f.y + "px";
+  });
+  fireballsToRemove.forEach(f => f.el.remove());
+  fireballs = fireballs.filter(f => !fireballsToRemove.includes(f));
+  marbles = marbles.filter(m => !m._dead);
+
+  physicsHandle = requestAnimationFrame(physicsLoop);
+}
+
+function eruptVolcano(v) {
+  const n = 3 + Math.floor(Math.random() * 3);
+  const cx = v.cx, cy = v.cy - 22;
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement('div');
+    el.className = 'fireball';
+    el.style.left = cx + 'px';
+    el.style.top  = cy + 'px';
+    shop.appendChild(el);
+    fireballs.push({
+      el, x: cx, y: cy,
+      vx: (Math.random() - 0.5) * 8,
+      vy: -9 - Math.random() * 4,
+      life: 200
+    });
+  }
+  // visual shake on the volcano itself
+  v.el.animate(
+    [{ transform: 'translate(0,0)' }, { transform: 'translate(-4px,2px)' }, { transform: 'translate(4px,-2px)' }, { transform: 'translate(0,0)' }],
+    { duration: 200 }
+  );
+  VOICES.boom(0);
+}
+
+function explodeMarble(m, colors) {
+  particleBurst(m.x + 45, m.y + 45, colors || ['#dc2626','#fbbf24']);
+  if (m.el) {
+    m.el.animate(
+      [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.2)', opacity: 0 }],
+      { duration: 220, easing: 'ease-out' }
+    ).onfinish = () => m.el.remove();
+  }
+}
+
+function destroyByFire(el) {
+  if (!el.parentNode) return;
+  const r = el.getBoundingClientRect();
+  const sr = shop.getBoundingClientRect();
+  particleBurst(r.left - sr.left + 45, r.top - sr.top + 45, ['#dc2626','#fbbf24','#7c2d12','#451a03']);
+  el.animate(
+    [{ transform: 'scale(1) rotate(0)', opacity: 1, filter: 'brightness(1)' },
+     { transform: 'scale(1.3) rotate(30deg)', opacity: 0, filter: 'brightness(3) sepia(1)' }],
+    { duration: 350, easing: 'ease-out' }
+  ).onfinish = () => el.remove();
+  VOICES.boom(0);
+}
+
+function particleBurst(cx, cy, colors) {
+  for (let i = 0; i < 14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = cx + 'px';
+    p.style.top  = cy + 'px';
+    p.style.background = colors[i % colors.length];
+    shop.appendChild(p);
+    const angle = (i / 14) * Math.PI * 2 + Math.random() * 0.4;
+    const dist = 40 + Math.random() * 50;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist - 10;
+    p.animate(
+      [{ transform: 'translate(0,0) scale(1)', opacity: 1 },
+       { transform: `translate(${dx}px, ${dy}px) scale(.3)`, opacity: 0 }],
+      { duration: 520 + Math.random() * 200, easing: 'ease-out' }
+    ).onfinish = () => p.remove();
+  }
+}
+
+const HIT_COOLDOWN = {};
+function hitPart(el, force = false) {
+  const id = el.dataset.id;
+  const now = performance.now();
+  if (!force && HIT_COOLDOWN[id] && now - HIT_COOLDOWN[id] < 250) return;
+  HIT_COOLDOWN[id] = now;
+  el.classList.add("hit");
+  setTimeout(() => el.classList.remove("hit"), 260);
+  const v = VOICES[PARTS[el.dataset.kind].voice];
+  if (v) v(0);
+}
+
+// ============================================================================
+// COUNTER & SILLY NAME
+// ============================================================================
+const countEl = document.getElementById("count");
+function updateCount() {
+  const n = shop.querySelectorAll(".part").length;
+  countEl.textContent = n + (n === 1 ? " part" : " parts");
+  shop.classList.toggle("has-parts", n > 0);
+}
+
+const ADJ  = ["Mighty","Wobbly","Bonkers","Mega","Turbo","Sneaky","Crispy","Soggy","Galactic","Cosmic","Stinky","Zany","Fluffy","Quantum","Atomic","Volcanic","Molten"];
+const NOUN = ["Whatsit","Doohickey","Thingamajig","Gizmo","Contraption","Machine","Wobbler","Spinner","Smasher","Hooter","Tooter","O-Matic","Engine","Eruptor"];
+const SUFFIX = ["2000","3000","5000","XL","Pro","Mark II","Mark VII","Deluxe","Supreme","9001"];
+function generateName(partsUsed) {
+  const a = ADJ[Math.floor(Math.random()*ADJ.length)];
+  const n = NOUN[Math.floor(Math.random()*NOUN.length)];
+  const s = SUFFIX[Math.floor(Math.random()*SUFFIX.length)];
+  if (partsUsed.length && Math.random() < 0.6) {
+    const featured = PARTS[partsUsed[Math.floor(Math.random()*partsUsed.length)]].name;
+    return `The ${a} ${featured}-${n} ${s}!`;
+  }
+  return `The ${a} ${n} ${s}!`;
+}
+
+// ============================================================================
+// AUTOSAVE + HISTORY
+// ============================================================================
+const STORE_CURRENT = "machinegame:current";
+const STORE_HISTORY = "machinegame:history";
+const MAX_HISTORY = 30;
+
+let history = [];
+let lastSnapJson = null;
+let runtimeBackup = null; // parts list captured at run-start; restored on stop
+
+function snapshot() {
+  return {
+    t: Date.now(),
+    parts: [...shop.querySelectorAll(".part")].map(el => ({
+      kind: el.dataset.kind,
+      x: parseFloat(el.style.left) || 0,
+      y: parseFloat(el.style.top)  || 0
+    }))
+  };
+}
+
+function applySnapshot(snap, opts = {}) {
+  shop.querySelectorAll(".part").forEach(el => el.remove());
+  (snap.parts || []).forEach(p => {
+    if (!p || !(p.kind in PARTS)) return; // backwards-compat: silently drop unknown kinds
+    spawnPartLocal(p.kind, +p.x || 0, +p.y || 0, { silent: true });
+  });
+  updateCount();
+  if (!opts.silent) saveCurrent();
+}
+
+function saveCurrent() {
+  try { localStorage.setItem(STORE_CURRENT, JSON.stringify(snapshot())); } catch (e) {}
+}
+function saveHistory() {
+  try { localStorage.setItem(STORE_HISTORY, JSON.stringify(history)); } catch (e) {}
+}
+
+function saveAndPush() {
+  if (document.body.classList.contains("running")) return;
+  const snap = snapshot();
+  const json = JSON.stringify(snap);
+  if (json === lastSnapJson) return;
+  if (lastSnapJson !== null) {
+    history.push(JSON.parse(lastSnapJson));
+    if (history.length > MAX_HISTORY) history.shift();
+    saveHistory();
+    renderHistory();
+  }
+  lastSnapJson = json;
+  saveCurrent();
+}
+
+function loadInitial() {
+  try {
+    const h = localStorage.getItem(STORE_HISTORY);
+    if (h) history = JSON.parse(h);
+  } catch (e) { history = []; }
+  let cur = null;
+  try {
+    const c = localStorage.getItem(STORE_CURRENT);
+    if (c) cur = JSON.parse(c);
+  } catch (e) {}
+  if (cur && cur.parts && cur.parts.length) {
+    applySnapshot(cur, { silent: true });
+  }
+  lastSnapJson = JSON.stringify(snapshot());
+  renderHistory();
+}
+
+function undo() {
+  if (document.body.classList.contains("running")) return;
+  if (!history.length) return;
+  const prev = history.pop();
+  applySnapshot(prev, { silent: true });
+  lastSnapJson = JSON.stringify(snapshot());
+  saveCurrent();
+  saveHistory();
+  renderHistory();
+  tone({ freq: 600, type: "triangle", dur: .1, vol: .12, slide: -200 });
+}
+
+// History panel
+const historyPanel = document.getElementById("historyPanel");
+const historyList  = document.getElementById("historyList");
+const historyBtn   = document.getElementById("historyBtn");
+const historyClose = document.getElementById("historyClose");
+historyBtn.addEventListener("click", () => historyPanel.classList.toggle("open"));
+historyClose.addEventListener("click", () => historyPanel.classList.remove("open"));
+
+function renderHistory() {
+  const undoBtn = document.getElementById("undoBtn");
+  if (undoBtn) undoBtn.disabled = history.length === 0;
+
+  historyList.innerHTML = "";
+  if (!history.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "Nothing here yet — start building and your history shows up here.";
+    historyList.appendChild(empty);
+    return;
+  }
+  for (let i = history.length - 1; i >= 0; i--) {
+    const snap = history[i];
+    const li = document.createElement("li");
+    const stepNum = i + 1;
+    li.innerHTML = `
+      <div>
+        <div class="step">Step ${stepNum}</div>
+        <div class="info">${snap.parts.length} ${snap.parts.length === 1 ? "part" : "parts"} • ${timeAgo(snap.t)}</div>
+      </div>
+      <div style="font-size:18px">↶</div>`;
+    li.addEventListener("click", () => {
+      const target = history[i];
+      history = history.slice(0, i);
+      applySnapshot(target, { silent: true });
+      lastSnapJson = JSON.stringify(snapshot());
+      saveCurrent(); saveHistory(); renderHistory();
+      historyPanel.classList.remove("open");
+      tone({ freq: 800, type: "triangle", dur: .12, vol: .12, slide: -100 });
+    });
+    historyList.appendChild(li);
+  }
+}
+function timeAgo(t) {
+  const s = Math.floor((Date.now() - t) / 1000);
+  if (s < 5) return "just now";
+  if (s < 60) return s + "s ago";
+  if (s < 3600) return Math.floor(s / 60) + "m ago";
+  if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return Math.floor(s / 86400) + "d ago";
+}
+
+// ============================================================================
+// EXPORT / IMPORT (build codes — backwards compatible)
+// ============================================================================
+// Format: "MMW1:" + base64( JSON({ v:1, parts:[{kind,x,y}, ...] }) )
+// Loaders silently drop unknown kinds, so:
+//   - old codes loaded in new pages: work (all known kinds load)
+//   - new codes loaded in old pages: work (unknown kinds skipped)
+
+function exportBuild() {
+  const data = { v: 1, parts: snapshot().parts };
+  return "MMW1:" + btoa(JSON.stringify(data));
+}
+
+function importBuild(str) {
+  if (typeof str !== "string") return { ok: false, msg: "Empty code." };
+  str = str.trim();
+  if (!str) return { ok: false, msg: "Paste a code first!" };
+
+  let data = null;
+  try {
+    if (/^MMW\d+:/.test(str)) {
+      const b64 = str.split(":").slice(1).join(":");
+      data = JSON.parse(atob(b64));
+    } else {
+      // be lenient: accept raw json or raw base64
+      try { data = JSON.parse(str); }
+      catch { data = JSON.parse(atob(str)); }
+    }
+  } catch (e) {
+    return { ok: false, msg: "Doesn't look like a Machine Workshop code." };
+  }
+  if (!data || !Array.isArray(data.parts)) {
+    return { ok: false, msg: "Code is missing the parts list." };
+  }
+
+  const validParts = data.parts.filter(p => p && typeof p.kind === "string" && p.kind in PARTS);
+  const skipped = data.parts.length - validParts.length;
+
+  applySnapshot({ parts: validParts });
+  saveAndPush();
+
+  let msg = `Loaded ${validParts.length} ${validParts.length === 1 ? "part" : "parts"}!`;
+  if (skipped > 0) msg += ` (${skipped} unknown part${skipped === 1 ? "" : "s"} skipped)`;
+  return { ok: true, msg };
+}
+
+// Share modal
+const modalBackdrop = document.getElementById("modalBackdrop");
+const modalClose    = document.getElementById("modalClose");
+const shareBtn      = document.getElementById("shareBtn");
+const exportText    = document.getElementById("exportText");
+const importText    = document.getElementById("importText");
+const copyBtn       = document.getElementById("copyBtn");
+const loadBtn       = document.getElementById("loadBtn");
+const loadMsg       = document.getElementById("loadMsg");
+
+shareBtn.addEventListener("click", () => {
+  if (document.body.classList.contains("running")) return;
+  exportText.value = exportBuild();
+  importText.value = "";
+  loadMsg.textContent = "";
+  loadMsg.className = "modal-msg";
+  modalBackdrop.hidden = false;
+});
+modalClose.addEventListener("click", () => modalBackdrop.hidden = true);
+modalBackdrop.addEventListener("click", (e) => {
+  if (e.target === modalBackdrop) modalBackdrop.hidden = true;
+});
+
+copyBtn.addEventListener("click", async () => {
+  exportText.focus();
+  exportText.select();
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(exportText.value);
+    ok = true;
+  } catch (e) {
+    try { ok = document.execCommand("copy"); } catch {}
+  }
+  copyBtn.textContent = ok ? "✅ Copied!" : "Select & copy manually";
+  setTimeout(() => copyBtn.textContent = "📋 Copy code", 1800);
+});
+
+loadBtn.addEventListener("click", () => {
+  const res = importBuild(importText.value);
+  loadMsg.textContent = res.msg;
+  loadMsg.className = "modal-msg " + (res.ok ? "success" : "error");
+  if (res.ok) setTimeout(() => modalBackdrop.hidden = true, 900);
+});
+
+// ============================================================================
+// RUN / STOP / CLEAR / SURPRISE / SOUND
+// ============================================================================
+const runBtn      = document.getElementById("runBtn");
+const clearBtn    = document.getElementById("clearBtn");
+const machineName = document.getElementById("machineName");
+const surpriseBtn = document.getElementById("surpriseBtn");
+const soundBtn    = document.getElementById("soundBtn");
+const undoBtn     = document.getElementById("undoBtn");
+
+let runInterval = null;
+
+runBtn.addEventListener("click", () => {
+  if (document.body.classList.contains("running")) stop();
+  else run();
+});
+
+function run() {
+  const parts = [...shop.querySelectorAll(".part")];
+  if (!parts.length) {
+    machineName.textContent = "...build something first, silly!";
+    return;
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  ac();
+
+  // Capture pre-run state so destroyed parts come back when we stop
+  runtimeBackup = parts.map(el => ({
+    kind: el.dataset.kind,
+    x: parseFloat(el.style.left) || 0,
+    y: parseFloat(el.style.top)  || 0
+  }));
+
+  document.body.classList.add("running");
+  runBtn.textContent = "■ STOP";
+  runBtn.classList.add("is-running");
+  historyPanel.classList.remove("open");
+  modalBackdrop.hidden = true;
+
+  machineName.textContent = generateName(parts.map(p => p.dataset.kind));
+
+  parts.forEach(el => {
+    if (el.dataset.kind !== "marble") el.classList.add("active");
+    const train = el.querySelector("[data-train]");
+    if (train) {
+      train.style.opacity = "1";
+      train.style.animation = "train-ride 1.4s linear infinite";
+    }
+  });
+
+  const chorus = () => {
+    [...shop.querySelectorAll(".part")].forEach((p, i) => {
+      if (p.dataset.kind === "marble") return;
+      const v = VOICES[PARTS[p.dataset.kind].voice];
+      if (v) v(i * 0.12);
+    });
+  };
+  chorus();
+  runInterval = setInterval(chorus, 2500);
+
+  startPhysics();
+}
+
+function stop() {
+  document.body.classList.remove("running");
+  runBtn.textContent = "▶ RUN!";
+  runBtn.classList.remove("is-running");
+  if (runInterval) { clearInterval(runInterval); runInterval = null; }
+  shop.querySelectorAll(".part").forEach(el => el.classList.remove("active", "hit"));
+  shop.querySelectorAll("[data-train]").forEach(t => {
+    t.style.opacity = "0"; t.style.animation = "none";
+  });
+  stopPhysics();
+  // Restore any destroyed/lost parts from the pre-run backup
+  if (runtimeBackup) {
+    shop.querySelectorAll(".part").forEach(el => el.remove());
+    runtimeBackup.forEach(p => spawnPartLocal(p.kind, p.x, p.y, { silent: true }));
+    updateCount();
+    runtimeBackup = null;
+  }
+}
+
+clearBtn.addEventListener("click", () => {
+  const parts = [...shop.querySelectorAll(".part")];
+  if (!parts.length && !document.body.classList.contains("running")) return;
+  stop();
+  const remaining = [...shop.querySelectorAll(".part")];
+  remaining.forEach(p => {
+    const r = p.getBoundingClientRect();
+    const sr = shop.getBoundingClientRect();
+    for (let i = 0; i < 6; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = (r.left - sr.left + 40) + "px";
+      c.style.top  = (r.top  - sr.top  + 40) + "px";
+      c.style.background = ["#ef4444","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ec4899"][i%6];
+      shop.appendChild(c);
+      const dx = (Math.random() - .5) * 200;
+      const dy = (Math.random() - .5) * 200;
+      c.animate(
+        [{ transform: "translate(0,0) rotate(0)", opacity: 1 },
+         { transform: `translate(${dx}px, ${dy}px) rotate(720deg)`, opacity: 0 }],
+        { duration: 700, easing: "ease-out" }
+      ).onfinish = () => c.remove();
+    }
+    p.remove();
+  });
+  updateCount();
+  tone({ freq: 300, type:"square", dur:.15, vol:.2, slide: -200 });
+  machineName.textContent = "untitled contraption";
+  saveAndPush();
+});
+
+surpriseBtn.addEventListener("click", () => {
+  if (document.body.classList.contains("running")) return;
+  const kinds = Object.keys(PARTS);
+  const n = 4 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    spawnInShopRandom(kinds[Math.floor(Math.random() * kinds.length)]);
+  }
+  tone({ freq: 700, type: "triangle", dur: .15, vol: .15, slide: 400 });
+});
+
+soundBtn.addEventListener("click", () => {
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? "🔊" : "🔇";
+});
+
+undoBtn.addEventListener("click", undo);
+
+// ============================================================================
+// INIT
+// ============================================================================
+loadInitial();
+</script>
+</body>
+</html>
