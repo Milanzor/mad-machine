@@ -416,6 +416,21 @@
   }
   .part.hit .core { animation: hitpop .25s ease-out !important; }
 
+  .part[data-kind="mouse"].empowered {
+    filter: drop-shadow(0 0 14px #f0abfc) drop-shadow(0 0 24px #ec4899);
+    z-index: 70;
+  }
+  .part[data-kind="mouse"].empowered .core {
+    transform: scale(1.55);
+    transform-origin: 50% 60%;
+    filter: hue-rotate(280deg) saturate(2.2) brightness(1.1);
+  }
+  @keyframes mouse-run {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-4px); }
+  }
+  .active[data-kind="mouse"] .core { animation: mouse-run .18s ease-in-out infinite; }
+
   /* Confetti */
   .confetti {
     position: absolute; width: 8px; height: 8px;
@@ -725,6 +740,37 @@ const PARTS = {
       <rect x="22" y="82" width="56" height="10" rx="3" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
     </svg>`
   },
+  mouse: {
+    name: "Mouse", anim: "", voice: "squeak", mouse: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 88 64 Q 72 74, 78 54" stroke="#6b7280" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="55" cy="64" rx="30" ry="20" fill="#9ca3af" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="38" cy="40" r="11" fill="#9ca3af" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="38" cy="40" r="6" fill="#fbcfe8"/>
+      <circle cx="55" cy="40" r="11" fill="#9ca3af" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="55" cy="40" r="6" fill="#fbcfe8"/>
+      <ellipse cx="42" cy="58" rx="20" ry="17" fill="#9ca3af" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="26" cy="64" r="3.5" fill="#fb7185" stroke="#2a2118" stroke-width="1.5"/>
+      <circle cx="40" cy="54" r="2.6" fill="#2a2118"/>
+      <circle cx="38" cy="52" r="1" fill="#fff"/>
+      <line x1="16" y1="60" x2="30" y2="62" stroke="#2a2118" stroke-width="1.5"/>
+      <line x1="16" y1="68" x2="30" y2="66" stroke="#2a2118" stroke-width="1.5"/>
+      <ellipse cx="50" cy="84" rx="5" ry="3" fill="#6b7280" stroke="#2a2118" stroke-width="1.5"/>
+      <ellipse cx="68" cy="84" rx="5" ry="3" fill="#6b7280" stroke="#2a2118" stroke-width="1.5"/>
+    </svg>`
+  },
+  cheese: {
+    name: "Cheese", anim: "anim-glow", voice: "ping", cheese: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 12 78 L 88 78 L 80 30 Z" fill="#fbbf24" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M 12 78 L 88 78 L 88 84 L 12 84 Z" fill="#d97706" stroke="#2a2118" stroke-width="2"/>
+      <ellipse cx="35" cy="68" rx="4.5" ry="3" fill="#a16207"/>
+      <ellipse cx="55" cy="58" rx="5" ry="3.5" fill="#a16207"/>
+      <ellipse cx="68" cy="70" rx="3.5" ry="2.5" fill="#a16207"/>
+      <ellipse cx="48" cy="74" rx="3" ry="2" fill="#a16207"/>
+      <ellipse cx="72" cy="48" rx="3" ry="2.5" fill="#a16207"/>
+    </svg>`
+  },
   volcano: {
     name: "Volcano", anim: "anim-rumble", voice: "boom",
     erupts: true, fireproof: true, danger: true,
@@ -798,7 +844,9 @@ const VOICES = {
   plink:  d => tone({ freq: 1500, type:"sine", dur:.1, vol:.12, slide: -400, delay: d }),
   sizzle: d => { noise({ dur:.5, vol:.12, filter: 3500, delay: d }); tone({ freq: 220, type:"sawtooth", dur:.3, vol:.08, slide:-100, delay: d }); },
   boom:   d => { noise({ dur:.5, vol:.18, filter: 180, delay: d }); tone({ freq: 90, type:"sawtooth", dur:.4, vol:.14, slide:-50, delay: d }); },
-  beep:   d => { tone({ freq: 880, type:"square", dur:.06, vol:.1, delay: d }); tone({ freq: 660, type:"square", dur:.06, vol:.1, delay: d+.1 }); tone({ freq: 990, type:"square", dur:.08, vol:.1, delay: d+.2 }); }
+  beep:   d => { tone({ freq: 880, type:"square", dur:.06, vol:.1, delay: d }); tone({ freq: 660, type:"square", dur:.06, vol:.1, delay: d+.1 }); tone({ freq: 990, type:"square", dur:.08, vol:.1, delay: d+.2 }); },
+  squeak: d => { tone({ freq: 2400, type:"sine", dur:.07, vol:.09, slide:-500, delay: d }); tone({ freq: 2000, type:"sine", dur:.07, vol:.09, slide:-500, delay: d+.09 }); },
+  munch:  d => { for (let i = 0; i < 3; i++) noise({ dur:.06, vol:.1, filter: 700, delay: d + i*.1 }); }
 };
 
 // ============================================================================
@@ -967,6 +1015,8 @@ let marbles   = []; // { el, x, y, vx, vy, origX, origY }
 let fireballs = []; // { el, x, y, vx, vy, life }
 const volcanoNext = new Map(); // partId -> next-eruption timestamp
 const robotState = new Map(); // partId -> { phase, nextAt, targetEl, fromX, fromY, toX, toY, animStart, animDur }
+const mouseState = new Map(); // partId -> { vx, vy, dirTimer, empoweredUntil }
+const EMPOWER_MS = 15000;
 
 const PART_RADIUS   = 42;
 const MARBLE_RADIUS = 30;
@@ -979,6 +1029,8 @@ function startPhysics() {
   fireballs.length = 0;
   volcanoNext.clear();
   robotState.clear();
+  mouseState.clear();
+  shop.querySelectorAll('.part.empowered').forEach(el => el.classList.remove('empowered'));
 
   shop.querySelectorAll('.part[data-kind="marble"]').forEach(el => {
     const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
@@ -990,10 +1042,11 @@ function startPhysics() {
     });
   });
 
-  // Always run physics if a volcano or robot is present, or marbles.
+  // Always run physics if any active critter / volcano is present, or marbles.
   const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
   const hasRobot   = !!shop.querySelector('.part[data-kind="robot"]');
-  if (!marbles.length && !hasVolcano && !hasRobot) return;
+  const hasMouse   = !!shop.querySelector('.part[data-kind="mouse"]');
+  if (!marbles.length && !hasVolcano && !hasRobot && !hasMouse) return;
 
   lastFrame = performance.now();
   physicsHandle = requestAnimationFrame(physicsLoop);
@@ -1007,7 +1060,9 @@ function stopPhysics() {
   fireballs.length = 0;
   volcanoNext.clear();
   robotState.clear();
+  mouseState.clear();
   shop.querySelectorAll('.part[data-grabbed]').forEach(el => delete el.dataset.grabbed);
+  shop.querySelectorAll('.part.empowered').forEach(el => el.classList.remove('empowered'));
 }
 
 function physicsLoop(now) {
@@ -1039,7 +1094,119 @@ function physicsLoop(now) {
     }
   });
 
-  // --- Robots: drive to a part, touch it, carry it to a new spot ---
+  // --- Mice: wander / flee robots / seek cheese / chase robots when empowered ---
+  const mouseEls  = [...shop.querySelectorAll('.part[data-kind="mouse"]')];
+  const cheeseEls = [...shop.querySelectorAll('.part[data-kind="cheese"]')];
+  const robotEls  = [...shop.querySelectorAll('.part[data-kind="robot"]')];
+
+  const liveMice = [];
+  mouseEls.forEach(el => {
+    const id = el.dataset.id;
+    let ms = mouseState.get(id);
+    if (!ms) {
+      ms = { vx: 0, vy: 0, dirTimer: 0, empoweredUntil: 0 };
+      mouseState.set(id, ms);
+    }
+    // expire empowered status
+    if (ms.empoweredUntil && now >= ms.empoweredUntil) {
+      ms.empoweredUntil = 0;
+      el.classList.remove('empowered');
+      VOICES.squeak(0);
+    }
+    liveMice.push({ el, ms });
+  });
+
+  const isEmpowered = (mouseEl) => {
+    const ms = mouseState.get(mouseEl.dataset.id);
+    return ms && ms.empoweredUntil > now;
+  };
+  const hasEmpoweredMouse = liveMice.some(({el}) => isEmpowered(el));
+
+  liveMice.forEach(({ el, ms }) => {
+    const mx = parseFloat(el.style.left) || 0;
+    const my = parseFloat(el.style.top)  || 0;
+    const mcx = mx + 45, mcy = my + 45;
+    const empowered = ms.empoweredUntil > now;
+
+    const nearestOf = (arr) => arr.reduce((acc, e) => {
+      const ex = (parseFloat(e.style.left) || 0) + 45;
+      const ey = (parseFloat(e.style.top)  || 0) + 45;
+      const d = Math.hypot(ex - mcx, ey - mcy);
+      return (!acc || d < acc.d) ? { el: e, x: ex, y: ey, d } : acc;
+    }, null);
+
+    let targetX = null, targetY = null, speed = 1.8;
+
+    if (empowered) {
+      const nr = nearestOf(robotEls);
+      if (nr) { targetX = nr.x; targetY = nr.y; speed = 3.2; }
+    } else if (cheeseEls.length) {
+      const nc = nearestOf(cheeseEls);
+      if (nc) { targetX = nc.x; targetY = nc.y; speed = 2.1; }
+    } else {
+      const nr = nearestOf(robotEls);
+      if (nr && nr.d < 220) {
+        targetX = mcx + (mcx - nr.x);
+        targetY = mcy + (mcy - nr.y);
+        speed = 2.8;
+      }
+    }
+
+    if (targetX == null) {
+      // wander
+      ms.dirTimer -= dt;
+      if (ms.dirTimer <= 0) {
+        const a = Math.random() * Math.PI * 2;
+        ms.vx = Math.cos(a) * 1.2;
+        ms.vy = Math.sin(a) * 1.2;
+        ms.dirTimer = 40 + Math.random() * 60;
+      }
+    } else {
+      const dx = targetX - mcx, dy = targetY - mcy;
+      const d = Math.hypot(dx, dy);
+      if (d > 0.1) {
+        ms.vx = (dx / d) * speed;
+        ms.vy = (dy / d) * speed;
+      }
+    }
+
+    let newX = mx + ms.vx * dt;
+    let newY = my + ms.vy * dt;
+    if (newX < 0)        { newX = 0;        ms.vx = Math.abs(ms.vx); ms.dirTimer = 0; }
+    if (newX > W - 90)   { newX = W - 90;   ms.vx = -Math.abs(ms.vx); ms.dirTimer = 0; }
+    if (newY < 0)        { newY = 0;        ms.vy = Math.abs(ms.vy); ms.dirTimer = 0; }
+    if (newY > H - 90)   { newY = H - 90;   ms.vy = -Math.abs(ms.vy); ms.dirTimer = 0; }
+    el.style.left = newX + 'px';
+    el.style.top  = newY + 'px';
+  });
+
+  // mouse-cheese: empower
+  liveMice.forEach(({ el, ms }) => {
+    if (ms.empoweredUntil > now) return;
+    const mx = (parseFloat(el.style.left) || 0) + 45;
+    const my = (parseFloat(el.style.top)  || 0) + 45;
+    for (const ch of cheeseEls) {
+      if (!ch.isConnected || ch._eaten) continue;
+      const cx = (parseFloat(ch.style.left) || 0) + 45;
+      const cy = (parseFloat(ch.style.top)  || 0) + 45;
+      if (Math.hypot(cx - mx, cy - my) < 60) {
+        ch._eaten = true;
+        ms.empoweredUntil = now + EMPOWER_MS;
+        el.classList.add('empowered');
+        VOICES.munch(0);
+        VOICES.squeak(0.18);
+        particleBurst(cx, cy, ['#fbbf24','#fde047','#a16207','#fff']);
+        ch.animate(
+          [{ transform: 'scale(1) rotate(0)', opacity: 1 },
+           { transform: 'scale(0.2) rotate(220deg)', opacity: 0 }],
+          { duration: 280, easing: 'ease-out' }
+        ).onfinish = () => ch.remove();
+        break;
+      }
+    }
+  });
+
+  // --- Robots: chase mice / carry parts / flee empowered mice ---
   const robots = obstacles.filter(o => o.kind === 'robot');
   const activeRobotIds = new Set(robots.map(r => r.el.dataset.id));
   const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -1051,17 +1218,60 @@ function physicsLoop(now) {
       robotState.set(id, s);
     }
 
+    // panic: if any empowered mouse exists, drop everything and flee
+    if (hasEmpoweredMouse && s.phase !== 'fleeing') {
+      if (s.targetEl) { delete s.targetEl.dataset.grabbed; s.targetEl = null; }
+      s.phase = 'fleeing';
+    }
+
+    if (s.phase === 'fleeing') {
+      const empMouse = liveMice.find(({el}) => isEmpowered(el));
+      if (!empMouse) { s.phase = 'idle'; s.nextAt = now + 400; return; }
+      const rx = parseFloat(r.el.style.left) || 0;
+      const ry = parseFloat(r.el.style.top)  || 0;
+      const mx = parseFloat(empMouse.el.style.left) || 0;
+      const my = parseFloat(empMouse.el.style.top)  || 0;
+      const dx = rx - mx, dy = ry - my;
+      const d = Math.hypot(dx, dy) || 1;
+      const step = 2.6 * dt;
+      let nx = rx + (dx / d) * step;
+      let ny = ry + (dy / d) * step;
+      nx = Math.max(0, Math.min(W - 90, nx));
+      ny = Math.max(0, Math.min(H - 90, ny));
+      r.el.style.left = nx + 'px';
+      r.el.style.top  = ny + 'px';
+      return;
+    }
+
     if (s.phase === 'idle') {
       if (now < s.nextAt) return;
-      const candidates = obstacles.filter(o =>
-        o !== r &&
-        o.kind !== 'robot' &&
-        o.kind !== 'lava' &&
-        o.kind !== 'volcano' &&
-        !o.el.dataset.grabbed
-      );
-      if (!candidates.length) { s.nextAt = now + 700; return; }
-      const target = candidates[Math.floor(Math.random() * candidates.length)];
+      // prefer non-empowered mouse if any exist
+      const mouseTargets = mouseEls.filter(m => !isEmpowered(m) && !m.dataset.grabbed);
+      let target = null;
+      let targetIsMouse = false;
+      if (mouseTargets.length) {
+        target = { el: mouseTargets[Math.floor(Math.random() * mouseTargets.length)] };
+        target.kind = 'mouse';
+        targetIsMouse = true;
+      } else {
+        const candidates = obstacles.filter(o =>
+          o !== r &&
+          o.kind !== 'robot' &&
+          o.kind !== 'mouse' &&
+          o.kind !== 'cheese' &&
+          o.kind !== 'lava' &&
+          o.kind !== 'volcano' &&
+          !o.el.dataset.grabbed
+        );
+        if (!candidates.length) { s.nextAt = now + 700; return; }
+        target = candidates[Math.floor(Math.random() * candidates.length)];
+      }
+      if (targetIsMouse) {
+        s.targetEl = target.el;
+        s.phase = 'chasing';
+        VOICES.beep(0);
+        return;
+      }
       target.el.dataset.grabbed = id;
       const rx = parseFloat(r.el.style.left) || 0;
       const ry = parseFloat(r.el.style.top)  || 0;
@@ -1080,6 +1290,20 @@ function physicsLoop(now) {
       s.animDur = Math.max(400, Math.min(1400, dist * 2.5));
       s.phase = 'seeking';
       VOICES.beep(0);
+    } else if (s.phase === 'chasing') {
+      if (!s.targetEl || !s.targetEl.isConnected || isEmpowered(s.targetEl)) {
+        s.phase = 'idle'; s.nextAt = now + 300; s.targetEl = null; return;
+      }
+      const rx = parseFloat(r.el.style.left) || 0;
+      const ry = parseFloat(r.el.style.top)  || 0;
+      const tx = parseFloat(s.targetEl.style.left) || 0;
+      const ty = parseFloat(s.targetEl.style.top)  || 0;
+      const dx = tx - rx, dy = ty - ry;
+      const d = Math.hypot(dx, dy) || 1;
+      const step = Math.min(2.4 * dt, d);
+      r.el.style.left = (rx + (dx / d) * step) + 'px';
+      r.el.style.top  = (ry + (dy / d) * step) + 'px';
+      // touch is handled in the mouse-robot collision pass below
     } else if (s.phase === 'seeking') {
       if (!s.targetEl || !s.targetEl.isConnected) {
         s.phase = 'idle'; s.nextAt = now + 600; s.targetEl = null; return;
@@ -1140,10 +1364,57 @@ function physicsLoop(now) {
     }
   });
   // release any targets held by robots that no longer exist (e.g. destroyed by fire)
-  for (const [id, s] of robotState) {
-    if (!activeRobotIds.has(id)) {
-      if (s.targetEl) delete s.targetEl.dataset.grabbed;
-      robotState.delete(id);
+  for (const [rid, rs] of robotState) {
+    if (!activeRobotIds.has(rid)) {
+      if (rs.targetEl) delete rs.targetEl.dataset.grabbed;
+      robotState.delete(rid);
+    }
+  }
+  // clean up state for mice that no longer exist
+  const liveMouseIds = new Set(mouseEls.map(m => m.dataset.id));
+  for (const mid of mouseState.keys()) {
+    if (!liveMouseIds.has(mid)) mouseState.delete(mid);
+  }
+
+  // --- Mouse vs Robot collisions (eat / get eaten) ---
+  for (const m of mouseEls) {
+    if (!m.isConnected) continue;
+    const mx = (parseFloat(m.style.left) || 0) + 45;
+    const my = (parseFloat(m.style.top)  || 0) + 45;
+    const ms = mouseState.get(m.dataset.id);
+    const empowered = ms && ms.empoweredUntil > now;
+    for (const rEl of robotEls) {
+      if (!rEl.isConnected) continue;
+      const rcx = (parseFloat(rEl.style.left) || 0) + 45;
+      const rcy = (parseFloat(rEl.style.top)  || 0) + 45;
+      if (Math.hypot(rcx - mx, rcy - my) < 60) {
+        if (empowered) {
+          // mouse eats robot
+          particleBurst(rcx, rcy, ['#9ca3af','#ec4899','#fbbf24','#2a2118']);
+          VOICES.squeak(0);
+          VOICES.boom(0.05);
+          rEl.animate(
+            [{ transform: 'scale(1)', opacity: 1 },
+             { transform: 'scale(.3) rotate(180deg)', opacity: 0 }],
+            { duration: 320, easing: 'ease-out' }
+          ).onfinish = () => rEl.remove();
+          // food coma — mouse becomes normal again
+          if (ms) ms.empoweredUntil = 0;
+          m.classList.remove('empowered');
+        } else {
+          // robot eats mouse
+          particleBurst(mx, my, ['#9ca3af','#fbcfe8','#fb7185','#fff']);
+          VOICES.squeak(0);
+          VOICES.munch(0.05);
+          m.animate(
+            [{ transform: 'scale(1)', opacity: 1 },
+             { transform: 'scale(.2)', opacity: 0 }],
+            { duration: 260, easing: 'ease-out' }
+          ).onfinish = () => m.remove();
+          mouseState.delete(m.dataset.id);
+        }
+        break;
+      }
     }
   }
 
