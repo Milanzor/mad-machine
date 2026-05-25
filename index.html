@@ -334,358 +334,343 @@
   .modal-backdrop[hidden] { display: none; }
   .modal {
     background: var(--paper);
-    // ... 2226 lines omitted
+    border: 4px solid #2a2118;
+    border-radius: 18px;
+    width: min(520px, 100%);
+    max-height: 92vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    overflow: hidden;
   }
-    // ... 2225 lines omitted
+  .modal > header {
+    background: #2a2118; color: #fff8e7;
+    padding: 12px 18px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-    // ... 2224 lines omitted
+  .modal > header h3 { margin: 0; color: #fbbf24; font-size: 18px; }
+  .modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
-    // ... 2223 lines omitted
+  .modal-section { margin-bottom: 16px; }
+  .modal-section label {
+    display: block; font-size: 14px; color: #6b5a3e;
+    margin-bottom: 6px; font-weight: bold;
   }
-    // ... 2222 lines omitted
+  .modal textarea {
+    width: 100%;
+    min-height: 70px;
+    border: 2px solid #c9b88c;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+    touch-action: auto;
+    user-select: text;
+    -webkit-user-select: text;
+    background: #fff8e7;
+    color: #2a2118;
   }
-    // ... 2221 lines omitted
+  .modal-btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .modal-btn {
+    font-size: 14px; padding: 10px 16px;
   }
-    // ... 2220 lines omitted
+  .modal-msg {
+    margin-top: 10px; font-size: 13px;
+    min-height: 18px;
   }
-    // ... 2219 lines omitted
+  .modal-msg.success { color: #16a34a; font-weight: bold; }
+  .modal-msg.error { color: #dc2626; font-weight: bold; }
+  .modal hr {
+    border: none; border-top: 2px dashed #c9b88c;
+    margin: 16px 0;
   }
-    // ... 2218 lines omitted
+
+  /* Map select */
+  .map-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
-    // ... 2217 lines omitted
+  @media (min-width: 520px) {
+    .map-grid { grid-template-columns: repeat(3, 1fr); }
   }
-    // ... 2216 lines omitted
+  .map-card {
+    background: #fff8e7;
+    border: 3px solid #2a2118;
+    border-radius: 14px;
+    box-shadow: 0 4px 0 #c9b88c;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px; font-weight: bold;
+    transition: transform .1s, box-shadow .1s;
+    touch-action: manipulation;
   }
-    // ... 2215 lines omitted
+  .map-card:hover { transform: translateY(-2px) rotate(-1deg); }
+  .map-card:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9b88c; }
+  .map-card .emoji { font-size: 38px; display: block; margin-bottom: 4px; line-height: 1; }
+  .map-card .swatch {
+    display: block;
+    height: 36px;
+    margin: 6px -2px 0;
+    border: 2px solid #2a2118;
+    border-radius: 8px;
   }
-    // ... 2214 lines omitted
+
+  /* Dinosaur is bigger than other parts */
+  .part[data-kind="dino"] .core {
+    transform: scale(1.55);
+    transform-origin: 50% 50%;
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,.3));
   }
-    // ... 2213 lines omitted
+  .part[data-kind="dinoEgg"].hatching .core {
+    animation: shake .12s linear infinite !important;
   }
-    // ... 2212 lines omitted
+
+  /* Theme decorations (non-interactive scenery on the world) */
+  .deco {
+    position: absolute;
+    pointer-events: none;
+    opacity: .55;
+    z-index: 0;
   }
-    // ... 2211 lines omitted
+  .deco svg { width: 100%; height: 100%; display: block; }
+  @keyframes drift {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
   }
-    // ... 2210 lines omitted
+  .deco.drifty { animation: drift 4s ease-in-out infinite; }
+  .deco.twinkle { animation: glow 2s ease-in-out infinite; }
+
+  /* Animations */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin-rev { to { transform: rotate(-360deg); } }
+  @keyframes bounce-y {
+    0%,100% { transform: translateY(0) scaleY(1); }
+    25%     { transform: translateY(-14px) scaleY(.85); }
+    50%     { transform: translateY(0) scaleY(1.1); }
+    75%     { transform: translateY(-6px) scaleY(.95); }
   }
-    // ... 2209 lines omitted
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-8deg); }
+    50%     { transform: rotate(8deg); }
   }
-    // ... 2208 lines omitted
+  @keyframes flip {
+    0%,100% { transform: rotate(0); }
+    50%     { transform: rotate(180deg); }
   }
-    // ... 2207 lines omitted
+  @keyframes shake {
+    0%,100% { transform: translate(0,0) rotate(0); }
+    20% { transform: translate(-3px,2px) rotate(-3deg); }
+    40% { transform: translate(3px,-1px) rotate(2deg); }
+    60% { transform: translate(-2px,-2px) rotate(-1deg); }
+    80% { transform: translate(2px,1px) rotate(2deg); }
   }
-    // ... 2206 lines omitted
+  @keyframes glow {
+    0%,100% { filter: drop-shadow(0 0 0 #fff) brightness(1); }
+    50%     { filter: drop-shadow(0 0 18px #fde047) brightness(1.4); }
   }
-    // ... 2205 lines omitted
+  @keyframes drive {
+    0%,100% { transform: translateX(-30px); }
+    50%     { transform: translateX(30px); }
   }
-    // ... 2204 lines omitted
+  @keyframes bounce-drive {
+    0%   { transform: translate(-30px, 0) rotate(-3deg); }
+    25%  { transform: translate(-15px, -22px) rotate(4deg); }
+    50%  { transform: translate(30px, 0) rotate(3deg); }
+    75%  { transform: translate(15px, -22px) rotate(-4deg); }
+    100% { transform: translate(-30px, 0) rotate(-3deg); }
   }
-    // ... 2203 lines omitted
+  @keyframes wave {
+    0%,100% { transform: translateY(0) rotate(-4deg); }
+    50%     { transform: translateY(-8px) rotate(4deg); }
   }
-    // ... 2202 lines omitted
+  @keyframes stretch {
+    0%,100% { transform: scaleY(1) scaleX(1); }
+    50%     { transform: scaleY(1.3) scaleX(.85); }
   }
-    // ... 2201 lines omitted
+  @keyframes roll {
+    0%   { transform: translateX(-50px) rotate(0deg); }
+    50%  { transform: translateX(50px)  rotate(360deg); }
+    100% { transform: translateX(-50px) rotate(0deg); }
   }
-    // ... 2200 lines omitted
+  @keyframes bubble {
+    0%,100% { transform: scale(1) translateY(0); filter: brightness(1); }
+    50%     { transform: scale(1.05) translateY(-2px); filter: brightness(1.3); }
   }
-    // ... 2199 lines omitted
+  @keyframes rumble {
+    0%,100% { transform: translate(0,0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(2px, -1px); }
+    75% { transform: translate(-1px, 2px); }
   }
-    // ... 2198 lines omitted
+  @keyframes train-ride {
+    0%   { offset-distance: 0%; }
+    100% { offset-distance: 100%; }
   }
-    // ... 2197 lines omitted
+
+  .active.anim-spin     .core { animation: spin 1.5s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-spinfast .core { animation: spin .35s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-spinrev  .core { animation: spin-rev 2s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-bounce   .core { animation: bounce-y .6s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-wiggle   .core { animation: wiggle .4s ease-in-out infinite; transform-origin: 50% 50%; }
+  .active.anim-flip     .core { animation: flip 1s ease-in-out infinite; transform-origin: 50% 70%; }
+  .active.anim-shake    .core { animation: shake .15s linear infinite; transform-origin: 50% 50%; }
+  .active.anim-glow     .core { animation: glow .9s ease-in-out infinite; }
+  .active.anim-drive    .core { animation: drive 2s ease-in-out infinite; }
+  .active.anim-bouncedrive .core { animation: bounce-drive .9s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-wave     .core { animation: wave .7s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-stretch  .core { animation: stretch .5s ease-in-out infinite; transform-origin: 50% 100%; }
+  .active.anim-roll     .core { animation: roll 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
+  .active.anim-bubble   .core { animation: bubble 1s ease-in-out infinite; }
+  .active.anim-rumble   .core { animation: rumble .12s linear infinite; }
+
+  body.running header h1 .squiggle { animation: wiggle .2s infinite; display: inline-block; }
+
+  @keyframes hitpop {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.25); filter: brightness(1.6) drop-shadow(0 0 10px #fde047); }
+    100% { transform: scale(1); }
   }
-    // ... 2196 lines omitted
+  .part.hit .core { animation: hitpop .25s ease-out !important; }
+
+  .part[data-kind="mouse"].empowered {
+    filter: drop-shadow(0 0 14px #f0abfc) drop-shadow(0 0 24px #ec4899);
+    z-index: 70;
   }
-    // ... 2195 lines omitted
+  .part[data-kind="mouse"].empowered .core {
+    transform: scale(1.55);
+    transform-origin: 50% 60%;
+    filter: hue-rotate(280deg) saturate(2.2) brightness(1.1);
   }
-    // ... 2194 lines omitted
+  @keyframes mouse-run {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-4px); }
   }
-    // ... 2193 lines omitted
+  .active[data-kind="mouse"] .core { animation: mouse-run .18s ease-in-out infinite; }
+
+  /* Confetti */
+  .confetti {
+    position: absolute; width: 8px; height: 8px;
+    pointer-events: none;
+    border-radius: 2px;
   }
-    // ... 2192 lines omitted
+  .particle {
+    position: absolute; width: 8px; height: 8px;
+    pointer-events: none;
+    border-radius: 50%;
+    z-index: 100;
+    margin-left: -4px; margin-top: -4px;
   }
-    // ... 2191 lines omitted
+  .fireball {
+    position: absolute;
+    width: 28px; height: 28px;
+    background: radial-gradient(circle, #fef3c7, #fbbf24 30%, #dc2626 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 60;
+    box-shadow: 0 0 12px #f59e0b, 0 0 24px rgba(220,38,38,.6);
+    margin-left: -14px; margin-top: -14px;
   }
-    // ... 2190 lines omitted
-  }
-    // ... 2189 lines omitted
-function ac() {
-    // ... 2188 lines omitted
-}
-function tone({ freq = 440, type = "sine", dur = 0.2, vol = 0.15, slide = 0, delay = 0 }) {
-    // ... 2186 lines omitted
-}
-function noise({ dur = 0.2, vol = 0.1, delay = 0, filter = 800 }) {
-    // ... 2184 lines omitted
-}
-    // ... 2183 lines omitted
-}
-    // ... 2182 lines omitted
-function setWorldTransform() {
-    // ... 2181 lines omitted
-}
-function clampWorld() {
-    // ... 2179 lines omitted
-}
-function zoomBy(factor) {
-    // ... 2177 lines omitted
-}
-function panBy(dx, dy) {
-    // ... 2175 lines omitted
-}
-    // ... 2174 lines omitted
-function spawnPartLocal(kind, localX, localY, opts = {}) {
-    // ... 2173 lines omitted
-  }
-    // ... 2172 lines omitted
-}
-    // ... 2171 lines omitted
-function positionLocal(el, localX, localY) {
-    // ... 2170 lines omitted
-}
-    // ... 2169 lines omitted
-function spawnPartFromClient(kind, clientX, clientY) {
-    // ... 2168 lines omitted
-}
-    // ... 2167 lines omitted
-function attachPartHandlers(el) {
-    // ... 2166 lines omitted
-    }
-    // ... 2165 lines omitted
-    }
-    // ... 2164 lines omitted
-    }
-    // ... 2163 lines omitted
-}
-    // ... 2162 lines omitted
-function deletePart(el) {
-    // ... 2161 lines omitted
-}
-    // ... 2160 lines omitted
-function spawnInShopRandom(kind) {
-    // ... 2159 lines omitted
-}
-    // ... 2158 lines omitted
-      }
-    // ... 2157 lines omitted
-function startPhysics() {
-    // ... 2156 lines omitted
-}
-    // ... 2155 lines omitted
-function stopPhysics() {
-    // ... 2154 lines omitted
-}
-    // ... 2153 lines omitted
-function physicsLoop(now) {
-    // ... 2152 lines omitted
-    }
-    // ... 2151 lines omitted
-    }
-    // ... 2150 lines omitted
-    }
-    // ... 2149 lines omitted
-    }
-    // ... 2148 lines omitted
-    }
-    // ... 2147 lines omitted
-    }
-    // ... 2146 lines omitted
-      }
-    // ... 2145 lines omitted
-      }
-    }
-    // ... 2143 lines omitted
-    }
-    // ... 2142 lines omitted
-    }
-    // ... 2141 lines omitted
-      }
-    }
-    // ... 2139 lines omitted
-      }
-    // ... 2138 lines omitted
-      }
-    }
-    // ... 2136 lines omitted
-      }
-    }
-    // ... 2134 lines omitted
-    }
-    // ... 2133 lines omitted
-    }
-    // ... 2132 lines omitted
-    }
-    // ... 2131 lines omitted
-      }
-    // ... 2130 lines omitted
-      }
-    // ... 2129 lines omitted
-      }
-    // ... 2128 lines omitted
-      }
-    // ... 2127 lines omitted
-      }
-    // ... 2126 lines omitted
-      }
-    // ... 2125 lines omitted
-      }
-    }
-    // ... 2123 lines omitted
-    }
-  }
-    // ... 2121 lines omitted
-  }
-    // ... 2120 lines omitted
-        }
-    // ... 2119 lines omitted
-      }
-    }
-  }
-    // ... 2116 lines omitted
-    }
-    // ... 2115 lines omitted
-      }
-    // ... 2114 lines omitted
-      }
-    // ... 2113 lines omitted
-    }
-    // ... 2112 lines omitted
-        }
-      }
-    // ... 2110 lines omitted
-      }
-    }
-    // ... 2108 lines omitted
-        }
-      }
-    }
-    // ... 2105 lines omitted
-}
-    // ... 2104 lines omitted
-function eruptVolcano(v) {
-    // ... 2103 lines omitted
-  }
-    // ... 2102 lines omitted
-}
-    // ... 2101 lines omitted
-function explodeMarble(m, colors) {
-    // ... 2100 lines omitted
-  }
-}
-    // ... 2098 lines omitted
-function destroyByFire(el) {
-    // ... 2097 lines omitted
-}
-    // ... 2096 lines omitted
-function particleBurst(cx, cy, colors) {
-    // ... 2095 lines omitted
-  }
-}
-    // ... 2093 lines omitted
-function hitPart(el, force = false) {
-    // ... 2092 lines omitted
-}
-    // ... 2091 lines omitted
-function updateCount() {
-    // ... 2090 lines omitted
-}
-    // ... 2089 lines omitted
-function generateName(partsUsed) {
-    // ... 2088 lines omitted
-  }
-    // ... 2087 lines omitted
-}
-    // ... 2086 lines omitted
-function snapshot() {
-    // ... 2085 lines omitted
-}
-    // ... 2084 lines omitted
-function applySnapshot(snap, opts = {}) {
-    // ... 2083 lines omitted
-}
-    // ... 2082 lines omitted
-function saveCurrent() {
-    // ... 2081 lines omitted
-}
-function saveHistory() {
-    // ... 2079 lines omitted
-}
-    // ... 2078 lines omitted
-function saveAndPush() {
-    // ... 2077 lines omitted
-  }
-    // ... 2076 lines omitted
-}
-    // ... 2075 lines omitted
-function loadInitial() {
-    // ... 2074 lines omitted
-  }
-    // ... 2073 lines omitted
-}
-    // ... 2072 lines omitted
-function undo() {
-    // ... 2071 lines omitted
-}
-    // ... 2070 lines omitted
-function renderHistory() {
-    // ... 2069 lines omitted
-  }
-    // ... 2068 lines omitted
-  }
-}
-function timeAgo(t) {
-    // ... 2065 lines omitted
-}
-    // ... 2064 lines omitted
-function exportBuild() {
-    // ... 2063 lines omitted
-}
-    // ... 2062 lines omitted
-function importBuild(str) {
-    // ... 2061 lines omitted
-    }
-    // ... 2060 lines omitted
-  }
-    // ... 2059 lines omitted
-  }
-    // ... 2058 lines omitted
-}
-    // ... 2057 lines omitted
-  }
-    // ... 2056 lines omitted
-function run() {
-    // ... 2055 lines omitted
-  }
-    // ... 2054 lines omitted
-    }
-    // ... 2053 lines omitted
-}
-    // ... 2052 lines omitted
-function stop() {
-    // ... 2051 lines omitted
-  }
-}
-    // ... 2049 lines omitted
-    }
-    // ... 2048 lines omitted
-  }
-    // ... 2047 lines omitted
-function applyTheme(key) {
-    // ... 2046 lines omitted
-      }
-    // ... 2045 lines omitted
-  }
-}
-    // ... 2043 lines omitted
-function showMapSelect(allowClose) {
-    // ... 2042 lines omitted
-  }
-    // ... 2041 lines omitted
-}
-    // ... 2040 lines omitted
-}
-// ... 2039 more lines (total: 2562)
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔧 Gekke Machine Werkplaats <span class="squiggle">~*~</span></h1>
+  <div class="machine-name" id="machineName">naamloze machine</div>
+</header>
+
+<aside class="bin">
+  <h2 id="binTitle">Rommellade</h2>
+  <button class="bin-arrow" id="binUp" aria-label="Omhoog">▲</button>
+  <div class="bin-scroll" id="binScroll">
+    <div class="bin-grid" id="binGrid"></div>
+  </div>
+  <button class="bin-arrow" id="binDown" aria-label="Omlaag">▼</button>
+</aside>
+
+<section class="shop" id="shop">
+  <div class="world" id="world"></div>
+  <div class="hint" id="hint">← tik op een dingetje om het toe te voegen!<br><small style="font-size:14px">leg een knikker en druk op START ✨ &middot; sleep lege ruimte om te slepen</small></div>
+  <div class="shop-controls" id="shopControls">
+    <div class="pan-pad">
+      <button class="shop-btn" id="panUp" aria-label="Omhoog">▲</button>
+      <button class="shop-btn" id="panLeft" aria-label="Links">◄</button>
+      <button class="shop-btn" id="panCenter" aria-label="Midden">⊙</button>
+      <button class="shop-btn" id="panRight" aria-label="Rechts">►</button>
+      <button class="shop-btn" id="panDown" aria-label="Omlaag">▼</button>
+    </div>
+    <div class="zoom-pad">
+      <button class="shop-btn" id="zoomIn" aria-label="Inzoomen">＋</button>
+      <button class="shop-btn" id="zoomOut" aria-label="Uitzoomen">－</button>
+    </div>
+  </div>
+</section>
+
+<footer class="controls">
+  <div class="count" id="count">0 onderdelen</div>
+  <button class="btn btn-icon" id="mapBtn" title="Kies wereld">🗺️</button>
+  <button class="btn btn-icon btn-undo" id="undoBtn" title="Ongedaan maken">↶</button>
+  <button class="btn btn-icon" id="historyBtn" title="Geschiedenis">📜</button>
+  <button class="btn btn-icon" id="shareBtn" title="Opslaan / Laden">💾</button>
+  <button class="btn btn-icon" id="soundBtn" title="Geluid">🔊</button>
+  <button class="btn btn-surprise" id="surpriseBtn">🎲 Verras me!</button>
+  <button class="btn btn-clear" id="clearBtn">💥 Wissen</button>
+  <button class="btn btn-run" id="runBtn">▶ START!</button>
+</footer>
+
+<aside class="history-panel" id="historyPanel">
+  <header>
+    <h3>📜 Geschiedenis (laatste 30)</h3>
+    <button class="panel-close" id="historyClose">×</button>
+  </header>
+  <ul class="history-list" id="historyList"></ul>
+</aside>
+
+<div class="modal-backdrop" id="mapBackdrop" hidden>
+  <div class="modal map-modal">
+    <header>
+      <h3>🗺️ Kies een wereld!</h3>
+      <button class="panel-close" id="mapClose" hidden>×</button>
+    </header>
+    <div class="modal-body">
+      <div class="map-grid" id="mapGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal">
+    <header>
+      <h3>💾 Opslaan / Laden</h3>
+      <button class="panel-close" id="modalClose">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="modal-section">
+        <label for="exportText">Kopieer deze code om je bouwsel op te slaan:</label>
+        <textarea id="exportText" readonly></textarea>
+        <div class="modal-btn-row">
+          <button class="btn btn-icon modal-btn" id="copyBtn">📋 Code kopiëren</button>
+        </div>
+      </div>
+      <hr/>
+      <div class="modal-section">
+        <label for="importText">Plak hier een code om te laden:</label>
+        <textarea id="importText" placeholder="plak hier je code..."></textarea>
+        <div class="modal-btn-row">
+          <button class="btn btn-surprise modal-btn" id="loadBtn">✨ Laden!</button>
+        </div>
+        <div class="modal-msg" id="loadMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>
-
