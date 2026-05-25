@@ -107,12 +107,22 @@
     grid-area: shop;
     position: relative;
     overflow: hidden;
-    background-color: var(--paper);
-    background-image:
-      linear-gradient(rgba(120,90,40,.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(120,90,40,.07) 1px, transparent 1px);
-    background-size: 24px 24px;
+    background: #0006;
     touch-action: none;
+    cursor: grab;
+  }
+  .shop.panning { cursor: grabbing; }
+  .world {
+    position: absolute;
+    top: 0; left: 0;
+    width: 3000px; height: 2000px;
+    background-color: var(--world-bg, var(--paper));
+    background-image: var(--world-pattern,
+      linear-gradient(rgba(120,90,40,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,90,40,.07) 1px, transparent 1px));
+    background-size: var(--world-pattern-size, 24px 24px);
+    transform-origin: 0 0;
+    will-change: transform;
   }
   .shop .hint {
     position: absolute; inset: 0;
@@ -315,6 +325,48 @@
     margin: 16px 0;
   }
 
+  /* Map select */
+  .map-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (min-width: 520px) {
+    .map-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .map-card {
+    background: #fff8e7;
+    border: 3px solid #2a2118;
+    border-radius: 14px;
+    box-shadow: 0 4px 0 #c9b88c;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px; font-weight: bold;
+    transition: transform .1s, box-shadow .1s;
+    touch-action: manipulation;
+  }
+  .map-card:hover { transform: translateY(-2px) rotate(-1deg); }
+  .map-card:active { transform: translateY(2px); box-shadow: 0 1px 0 #c9b88c; }
+  .map-card .emoji { font-size: 38px; display: block; margin-bottom: 4px; line-height: 1; }
+  .map-card .swatch {
+    display: block;
+    height: 36px;
+    margin: 6px -2px 0;
+    border: 2px solid #2a2118;
+    border-radius: 8px;
+  }
+
+  /* Dinosaur is bigger than other parts */
+  .part[data-kind="dino"] .core {
+    transform: scale(1.55);
+    transform-origin: 50% 50%;
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,.3));
+  }
+  .part[data-kind="dinoEgg"].hatching .core {
+    animation: shake .12s linear infinite !important;
+  }
+
   /* Animations */
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes spin-rev { to { transform: rotate(-360deg); } }
@@ -460,11 +512,13 @@
 </aside>
 
 <section class="shop" id="shop">
-  <div class="hint">← tap any thingy to add it!<br><small style="font-size:14px">drop a marble and press RUN ✨</small></div>
+  <div class="world" id="world"></div>
+  <div class="hint">← tap any thingy to add it!<br><small style="font-size:14px">drop a marble and press RUN ✨ &middot; drag empty space to pan</small></div>
 </section>
 
 <footer class="controls">
   <div class="count" id="count">0 parts</div>
+  <button class="btn btn-icon" id="mapBtn" title="Pick map">🗺️</button>
   <button class="btn btn-icon btn-undo" id="undoBtn" title="Undo">↶</button>
   <button class="btn btn-icon" id="historyBtn" title="History">📜</button>
   <button class="btn btn-icon" id="shareBtn" title="Save / Load">💾</button>
@@ -481,6 +535,18 @@
   </header>
   <ul class="history-list" id="historyList"></ul>
 </aside>
+
+<div class="modal-backdrop" id="mapBackdrop" hidden>
+  <div class="modal map-modal">
+    <header>
+      <h3>🗺️ Pick a map!</h3>
+      <button class="panel-close" id="mapClose" hidden>×</button>
+    </header>
+    <div class="modal-body">
+      <div class="map-grid" id="mapGrid"></div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-backdrop" id="modalBackdrop" hidden>
   <div class="modal">
@@ -750,6 +816,34 @@ const PARTS = {
       <ellipse cx="68" cy="84" rx="5" ry="3" fill="#6b7280" stroke="#2a2118" stroke-width="1.5"/>
     </svg>`
   },
+  dinoEgg: {
+    name: "Dino Egg", anim: "anim-wiggle", voice: "ping", hatches: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <ellipse cx="50" cy="58" rx="32" ry="40" fill="#fde68a" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="40" cy="42" rx="10" ry="14" fill="#fef3c7" opacity=".8"/>
+      <path d="M 22 50 Q 32 44 36 54 Q 46 48 50 60 Q 56 48 64 54 Q 70 44 78 50" fill="none" stroke="#a16207" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="40" cy="70" r="3" fill="#854d0e"/>
+      <circle cx="58" cy="78" r="2.5" fill="#854d0e"/>
+      <circle cx="38" cy="82" r="2" fill="#854d0e"/>
+      <circle cx="62" cy="64" r="2.5" fill="#854d0e"/>
+    </svg>`
+  },
+  dino: {
+    name: "Dinosaur", anim: "", voice: "boom", hidden: true, dino: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 92 70 L 76 52 L 70 64 Z" fill="#16a34a" stroke="#2a2118" stroke-width="2.5"/>
+      <ellipse cx="56" cy="62" rx="26" ry="18" fill="#22c55e" stroke="#2a2118" stroke-width="3"/>
+      <path d="M 34 46 L 38 38 L 42 46 L 48 36 L 54 46 L 60 36 L 66 46 L 72 38 L 76 46" fill="#15803d" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse cx="26" cy="50" rx="20" ry="15" fill="#22c55e" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="18" cy="46" r="4" fill="#fff" stroke="#2a2118" stroke-width="1.5"/>
+      <circle cx="17" cy="46" r="2.2" fill="#2a2118"/>
+      <path d="M 6 54 L 28 56 L 26 60 L 8 58 Z" fill="#15803d" stroke="#2a2118" stroke-width="2"/>
+      <path d="M 12 56 L 14 60 L 16 56 M 20 57 L 22 60 L 24 57" fill="#fff" stroke="#2a2118" stroke-width="1"/>
+      <rect x="44" y="74" width="7" height="14" rx="2" fill="#16a34a" stroke="#2a2118" stroke-width="2"/>
+      <rect x="64" y="74" width="7" height="14" rx="2" fill="#16a34a" stroke="#2a2118" stroke-width="2"/>
+      <ellipse cx="56" cy="68" rx="16" ry="6" fill="#86efac" opacity=".7"/>
+    </svg>`
+  },
   cheese: {
     name: "Cheese", anim: "anim-glow", voice: "ping", cheese: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
@@ -845,6 +939,7 @@ const VOICES = {
 // ============================================================================
 const binGrid = document.getElementById("binGrid");
 for (const [key, p] of Object.entries(PARTS)) {
+  if (p.hidden) continue;
   const el = document.createElement("div");
   el.className = "bin-item" + (p.danger ? " danger" : "");
   el.dataset.kind = key;
@@ -856,9 +951,22 @@ for (const [key, p] of Object.entries(PARTS)) {
 // STATE
 // ============================================================================
 const shop = document.getElementById("shop");
+const world = document.getElementById("world");
+const WORLD_W = 3000, WORLD_H = 2000;
+let worldX = 0, worldY = 0;
 let nextId = 1;
 let dragging = null;
 let dragOffset = { x: 0, y: 0 };
+
+function setWorldTransform() {
+  world.style.transform = `translate(${worldX}px, ${worldY}px)`;
+}
+function clampWorld() {
+  const sr = shop.getBoundingClientRect();
+  worldX = Math.min(0, Math.max(sr.width  - WORLD_W, worldX));
+  worldY = Math.min(0, Math.max(sr.height - WORLD_H, worldY));
+}
+setWorldTransform();
 
 // ============================================================================
 // SPAWN & DRAG (coords are shop-local top-left)
@@ -884,7 +992,7 @@ function spawnPartLocal(kind, localX, localY, opts = {}) {
   }
 
   positionLocal(el, localX, localY);
-  shop.appendChild(el);
+  world.appendChild(el);
   attachPartHandlers(el);
   updateCount();
   if (!opts.silent) saveAndPush();
@@ -892,17 +1000,16 @@ function spawnPartLocal(kind, localX, localY, opts = {}) {
 }
 
 function positionLocal(el, localX, localY) {
-  const sr = shop.getBoundingClientRect();
   const w = 90, h = 90;
-  const cx = Math.max(0, Math.min(sr.width  - w, localX));
-  const cy = Math.max(0, Math.min(sr.height - h, localY));
+  const cx = Math.max(0, Math.min(WORLD_W - w, localX));
+  const cy = Math.max(0, Math.min(WORLD_H - h, localY));
   el.style.left = cx + "px";
   el.style.top  = cy + "px";
 }
 
 function spawnPartFromClient(kind, clientX, clientY) {
-  const sr = shop.getBoundingClientRect();
-  spawnPartLocal(kind, clientX - sr.left - 45, clientY - sr.top - 45);
+  const wr = world.getBoundingClientRect();
+  spawnPartLocal(kind, clientX - wr.left - 45, clientY - wr.top - 45);
 }
 
 function attachPartHandlers(el) {
@@ -922,8 +1029,8 @@ function attachPartHandlers(el) {
   });
   el.addEventListener("pointermove", (e) => {
     if (dragging === el) {
-      const sr = shop.getBoundingClientRect();
-      positionLocal(el, e.clientX - sr.left - dragOffset.x - 45, e.clientY - sr.top - dragOffset.y - 45);
+      const wr = world.getBoundingClientRect();
+      positionLocal(el, e.clientX - wr.left - dragOffset.x - 45, e.clientY - wr.top - dragOffset.y - 45);
     }
   });
   const release = () => {
@@ -945,8 +1052,9 @@ function deletePart(el) {
 
 function spawnInShopRandom(kind) {
   const sr = shop.getBoundingClientRect();
-  const localX = sr.width  * (0.25 + Math.random() * 0.5) - 45;
-  const localY = sr.height * (0.25 + Math.random() * 0.5) - 45;
+  // spawn within the currently-visible portion of the world
+  const localX = (-worldX) + sr.width  * (0.25 + Math.random() * 0.5) - 45;
+  const localY = (-worldY) + sr.height * (0.25 + Math.random() * 0.5) - 45;
   spawnPartLocal(kind, localX, localY);
 }
 
@@ -993,9 +1101,34 @@ document.querySelectorAll(".bin-item").forEach(item => {
   });
 });
 
-shop.addEventListener("pointerdown", () => {
+// --- Pan the world ---
+let panActive = false, panStartX = 0, panStartY = 0, panStartWX = 0, panStartWY = 0, panPointerId = null;
+shop.addEventListener("pointerdown", (e) => {
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  if (e.target.closest(".part")) return;
+  panActive = true;
+  panPointerId = e.pointerId;
+  panStartX = e.clientX; panStartY = e.clientY;
+  panStartWX = worldX;   panStartWY = worldY;
+  shop.classList.add("panning");
+  try { shop.setPointerCapture(e.pointerId); } catch (_) {}
 });
+shop.addEventListener("pointermove", (e) => {
+  if (!panActive || e.pointerId !== panPointerId) return;
+  worldX = panStartWX + (e.clientX - panStartX);
+  worldY = panStartWY + (e.clientY - panStartY);
+  clampWorld();
+  setWorldTransform();
+});
+const endPan = (e) => {
+  if (!panActive) return;
+  if (e && e.pointerId !== panPointerId) return;
+  panActive = false; panPointerId = null;
+  shop.classList.remove("panning");
+};
+shop.addEventListener("pointerup", endPan);
+shop.addEventListener("pointercancel", endPan);
+window.addEventListener("resize", () => { clampWorld(); setWorldTransform(); });
 
 // ============================================================================
 // PHYSICS — marbles, fireballs, lava, volcano
@@ -1007,6 +1140,8 @@ let fireballs = []; // { el, x, y, vx, vy, life }
 const volcanoNext = new Map(); // partId -> next-eruption timestamp
 const robotState = new Map(); // partId -> { phase, nextAt, targetEl, fromX, fromY, toX, toY, animStart, animDur }
 const mouseState = new Map(); // partId -> { vx, vy, dirTimer, empoweredUntil }
+const eggState   = new Map(); // partId -> { hatchAt }
+const dinoState  = new Map(); // partId -> { vx, vy, dirTimer }
 const EMPOWER_MS = 15000;
 
 const PART_RADIUS   = 42;
@@ -1021,7 +1156,10 @@ function startPhysics() {
   volcanoNext.clear();
   robotState.clear();
   mouseState.clear();
+  eggState.clear();
+  dinoState.clear();
   shop.querySelectorAll('.part.empowered').forEach(el => el.classList.remove('empowered'));
+  shop.querySelectorAll('.part.hatching').forEach(el => el.classList.remove('hatching'));
 
   shop.querySelectorAll('.part[data-kind="marble"]').forEach(el => {
     const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
@@ -1037,7 +1175,9 @@ function startPhysics() {
   const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
   const hasRobot   = !!shop.querySelector('.part[data-kind="robot"]');
   const hasMouse   = !!shop.querySelector('.part[data-kind="mouse"]');
-  if (!marbles.length && !hasVolcano && !hasRobot && !hasMouse) return;
+  const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"]');
+  const hasDino    = !!shop.querySelector('.part[data-kind="dino"]');
+  if (!marbles.length && !hasVolcano && !hasRobot && !hasMouse && !hasEgg && !hasDino) return;
 
   lastFrame = performance.now();
   physicsHandle = requestAnimationFrame(physicsLoop);
@@ -1052,15 +1192,17 @@ function stopPhysics() {
   volcanoNext.clear();
   robotState.clear();
   mouseState.clear();
+  eggState.clear();
+  dinoState.clear();
   shop.querySelectorAll('.part[data-grabbed]').forEach(el => delete el.dataset.grabbed);
   shop.querySelectorAll('.part.empowered').forEach(el => el.classList.remove('empowered'));
+  shop.querySelectorAll('.part.hatching').forEach(el => el.classList.remove('hatching'));
 }
 
 function physicsLoop(now) {
   const dt = Math.min(2, (now - lastFrame) / 16);
   lastFrame = now;
-  const sr = shop.getBoundingClientRect();
-  const W = sr.width, H = sr.height;
+  const W = WORLD_W, H = WORLD_H;
 
   const partEls = [...shop.querySelectorAll('.part:not([data-kind="marble"])')];
   const obstacles = partEls.map(el => {
@@ -1084,6 +1226,109 @@ function physicsLoop(now) {
       volcanoNext.set(id, now + 2200 + Math.random() * 1800);
     }
   });
+
+  // --- Dino eggs: hatch on a timer ---
+  const eggEls = [...shop.querySelectorAll('.part[data-kind="dinoEgg"]')];
+  eggEls.forEach(el => {
+    const id = el.dataset.id;
+    let es = eggState.get(id);
+    if (!es) {
+      es = { hatchAt: now + 6000 + Math.random() * 10000 };
+      eggState.set(id, es);
+    }
+    if (!el.classList.contains('hatching') && now > es.hatchAt - 2000) {
+      el.classList.add('hatching');
+    }
+    if (now >= es.hatchAt) {
+      const x = parseFloat(el.style.left) || 0;
+      const y = parseFloat(el.style.top)  || 0;
+      particleBurst(x + 45, y + 45, ['#fde047','#fbbf24','#22c55e','#fff']);
+      VOICES.boom(0);
+      VOICES.squeak(0.12);
+      el.animate(
+        [{ transform: 'scale(1) rotate(0)', opacity: 1 },
+         { transform: 'scale(1.4) rotate(120deg)', opacity: 0 }],
+        { duration: 320, easing: 'ease-out' }
+      ).onfinish = () => el.remove();
+      eggState.delete(id);
+      const dino = spawnPartLocal('dino', x, y, { silent: true });
+      dino.classList.add('active');
+    }
+  });
+
+  // --- Dinosaurs: stomp around and eat everything ---
+  const dinoEls = [...shop.querySelectorAll('.part[data-kind="dino"]')];
+  dinoEls.forEach(el => {
+    const id = el.dataset.id;
+    let ds = dinoState.get(id);
+    if (!ds) {
+      ds = { vx: 0, vy: 0, dirTimer: 0 };
+      dinoState.set(id, ds);
+    }
+    const dx = parseFloat(el.style.left) || 0;
+    const dy = parseFloat(el.style.top)  || 0;
+    const dcx = dx + 45, dcy = dy + 45;
+
+    const prey = [...shop.querySelectorAll('.part')].filter(p =>
+      p !== el && p.dataset.kind !== 'dino' && p.isConnected
+    );
+
+    let target = null;
+    if (prey.length) {
+      let bestD = Infinity;
+      prey.forEach(p => {
+        const px = (parseFloat(p.style.left) || 0) + 45;
+        const py = (parseFloat(p.style.top)  || 0) + 45;
+        const d = Math.hypot(px - dcx, py - dcy);
+        if (d < bestD) { bestD = d; target = { el: p, x: px, y: py, d }; }
+      });
+    }
+
+    if (target) {
+      const dirX = target.x - dcx, dirY = target.y - dcy;
+      const len = Math.hypot(dirX, dirY) || 1;
+      ds.vx = (dirX / len) * 1.7;
+      ds.vy = (dirY / len) * 1.7;
+      if (target.d < 70) {
+        // CHOMP
+        particleBurst(target.x, target.y, ['#16a34a','#fbbf24','#dc2626','#fff','#86efac']);
+        VOICES.boom(0);
+        VOICES.munch(0.05);
+        target.el.animate(
+          [{ transform: 'scale(1)', opacity: 1 },
+           { transform: 'scale(.3) rotate(160deg)', opacity: 0 }],
+          { duration: 260, easing: 'ease-out' }
+        ).onfinish = () => target.el.remove();
+        const tid = target.el.dataset.id;
+        mouseState.delete(tid);
+        robotState.delete(tid);
+        eggState.delete(tid);
+        const marbleIdx = marbles.findIndex(m => m.el === target.el);
+        if (marbleIdx >= 0) marbles[marbleIdx]._dead = true;
+      }
+    } else {
+      ds.dirTimer -= dt;
+      if (ds.dirTimer <= 0) {
+        const a = Math.random() * Math.PI * 2;
+        ds.vx = Math.cos(a) * 1.0;
+        ds.vy = Math.sin(a) * 1.0;
+        ds.dirTimer = 50 + Math.random() * 80;
+      }
+    }
+
+    let nx = dx + ds.vx * dt;
+    let ny = dy + ds.vy * dt;
+    if (nx < 0)        { nx = 0;        ds.vx = Math.abs(ds.vx);  ds.dirTimer = 0; }
+    if (nx > W - 90)   { nx = W - 90;   ds.vx = -Math.abs(ds.vx); ds.dirTimer = 0; }
+    if (ny < 0)        { ny = 0;        ds.vy = Math.abs(ds.vy);  ds.dirTimer = 0; }
+    if (ny > H - 90)   { ny = H - 90;   ds.vy = -Math.abs(ds.vy); ds.dirTimer = 0; }
+    el.style.left = nx + 'px';
+    el.style.top  = ny + 'px';
+  });
+  const liveDinoIds = new Set(dinoEls.map(d => d.dataset.id));
+  for (const id of dinoState.keys()) if (!liveDinoIds.has(id)) dinoState.delete(id);
+  const liveEggIds = new Set(eggEls.map(e => e.dataset.id));
+  for (const id of eggState.keys()) if (!liveEggIds.has(id)) eggState.delete(id);
 
   // --- Mice: wander / flee robots / seek cheese / chase robots when empowered ---
   const mouseEls  = [...shop.querySelectorAll('.part[data-kind="mouse"]')];
@@ -1542,7 +1787,7 @@ function eruptVolcano(v) {
     el.className = 'fireball';
     el.style.left = cx + 'px';
     el.style.top  = cy + 'px';
-    shop.appendChild(el);
+    world.appendChild(el);
     fireballs.push({
       el, x: cx, y: cy,
       vx: (Math.random() - 0.5) * 8,
@@ -1571,8 +1816,8 @@ function explodeMarble(m, colors) {
 function destroyByFire(el) {
   if (!el.parentNode) return;
   const r = el.getBoundingClientRect();
-  const sr = shop.getBoundingClientRect();
-  particleBurst(r.left - sr.left + 45, r.top - sr.top + 45, ['#dc2626','#fbbf24','#7c2d12','#451a03']);
+  const wr = world.getBoundingClientRect();
+  particleBurst(r.left - wr.left + 45, r.top - wr.top + 45, ['#dc2626','#fbbf24','#7c2d12','#451a03']);
   el.animate(
     [{ transform: 'scale(1) rotate(0)', opacity: 1, filter: 'brightness(1)' },
      { transform: 'scale(1.3) rotate(30deg)', opacity: 0, filter: 'brightness(3) sepia(1)' }],
@@ -1588,7 +1833,7 @@ function particleBurst(cx, cy, colors) {
     p.style.left = cx + 'px';
     p.style.top  = cy + 'px';
     p.style.background = colors[i % colors.length];
-    shop.appendChild(p);
+    world.appendChild(p);
     const angle = (i / 14) * Math.PI * 2 + Math.random() * 0.4;
     const dist = 40 + Math.random() * 50;
     const dx = Math.cos(angle) * dist;
@@ -1950,14 +2195,14 @@ clearBtn.addEventListener("click", () => {
   const remaining = [...shop.querySelectorAll(".part")];
   remaining.forEach(p => {
     const r = p.getBoundingClientRect();
-    const sr = shop.getBoundingClientRect();
+    const wr = world.getBoundingClientRect();
     for (let i = 0; i < 6; i++) {
       const c = document.createElement("div");
       c.className = "confetti";
-      c.style.left = (r.left - sr.left + 40) + "px";
-      c.style.top  = (r.top  - sr.top  + 40) + "px";
+      c.style.left = (r.left - wr.left + 40) + "px";
+      c.style.top  = (r.top  - wr.top  + 40) + "px";
       c.style.background = ["#ef4444","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ec4899"][i%6];
-      shop.appendChild(c);
+      world.appendChild(c);
       const dx = (Math.random() - .5) * 200;
       const dy = (Math.random() - .5) * 200;
       c.animate(
@@ -1976,7 +2221,7 @@ clearBtn.addEventListener("click", () => {
 
 surpriseBtn.addEventListener("click", () => {
   if (document.body.classList.contains("running")) return;
-  const kinds = Object.keys(PARTS);
+  const kinds = Object.keys(PARTS).filter(k => !PARTS[k].hidden);
   const n = 4 + Math.floor(Math.random() * 3);
   for (let i = 0; i < n; i++) {
     spawnInShopRandom(kinds[Math.floor(Math.random() * kinds.length)]);
@@ -1992,9 +2237,112 @@ soundBtn.addEventListener("click", () => {
 undoBtn.addEventListener("click", undo);
 
 // ============================================================================
+// MAPS / THEMES
+// ============================================================================
+const THEMES = {
+  workshop: { name: "Workshop", emoji: "🔧",
+    bg: "#f4ead5",
+    pattern: "linear-gradient(rgba(120,90,40,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(120,90,40,.07) 1px, transparent 1px)",
+    patternSize: "24px 24px" },
+  dino: { name: "Dino Land", emoji: "🦖",
+    bg: "#bbf7d0",
+    pattern: "radial-gradient(circle at 30% 40%, rgba(20,83,45,.22) 5px, transparent 8px), radial-gradient(circle at 70% 60%, rgba(101,163,13,.18) 6px, transparent 10px)",
+    patternSize: "120px 80px, 160px 100px" },
+  robot: { name: "Robot City", emoji: "🤖",
+    bg: "#cbd5e1",
+    pattern: "linear-gradient(rgba(51,65,85,.25) 1px, transparent 1px), linear-gradient(90deg, rgba(51,65,85,.25) 1px, transparent 1px)",
+    patternSize: "44px 44px" },
+  ducks: { name: "Ducky Pool", emoji: "🦆",
+    bg: "#bae6fd",
+    pattern: "radial-gradient(ellipse 22px 7px at center, rgba(255,255,255,.55) 60%, transparent 65%)",
+    patternSize: "100px 60px" },
+  mice: { name: "Mouse Town", emoji: "🐭",
+    bg: "#fbcfe8",
+    pattern: "radial-gradient(circle, rgba(190,24,93,.18) 3px, transparent 4px), radial-gradient(circle at 50% 50%, rgba(251,191,36,.4) 6px, transparent 9px)",
+    patternSize: "44px 44px, 180px 180px" },
+  music: { name: "Music Park", emoji: "🎵",
+    bg: "#ede9fe",
+    pattern: "repeating-linear-gradient(0deg, transparent 0 22px, rgba(124,58,237,.45) 22px 24px)",
+    patternSize: "100% 130px" },
+  space: { name: "Outer Space", emoji: "🚀",
+    bg: "#1e1b4b",
+    pattern: "radial-gradient(circle, white 1.4px, transparent 1.8px), radial-gradient(circle, #fde047 1.2px, transparent 1.6px)",
+    patternSize: "140px 90px, 220px 170px" },
+  candy: { name: "Candy Land", emoji: "🍬",
+    bg: "#fce7f3",
+    pattern: "repeating-linear-gradient(45deg, rgba(236,72,153,.18) 0 10px, transparent 10px 28px), repeating-linear-gradient(-45deg, rgba(251,191,36,.15) 0 10px, transparent 10px 28px)",
+    patternSize: "auto" },
+  ocean: { name: "Under Ocean", emoji: "🌊",
+    bg: "#7dd3fc",
+    pattern: "radial-gradient(ellipse 36px 11px at center, rgba(255,255,255,.35) 50%, transparent 60%)",
+    patternSize: "100px 38px" },
+  jungle: { name: "Jungle", emoji: "🌴",
+    bg: "#86efac",
+    pattern: "radial-gradient(circle at 30% 30%, rgba(20,83,45,.22) 7px, transparent 11px), radial-gradient(circle at 70% 70%, rgba(20,83,45,.16) 4px, transparent 7px)",
+    patternSize: "110px 90px, 80px 100px" },
+  farm: { name: "Farm Yard", emoji: "🚜",
+    bg: "#fef3c7",
+    pattern: "repeating-linear-gradient(0deg, transparent 0 30px, rgba(180,83,9,.18) 30px 33px), repeating-linear-gradient(90deg, transparent 0 30px, rgba(180,83,9,.12) 30px 33px)",
+    patternSize: "auto" },
+  ice: { name: "Ice World", emoji: "❄️",
+    bg: "#e0f2fe",
+    pattern: "radial-gradient(circle at 50% 50%, rgba(255,255,255,.7) 4px, transparent 6px), radial-gradient(circle at 30% 70%, rgba(56,189,248,.3) 3px, transparent 5px)",
+    patternSize: "70px 70px, 100px 100px" }
+};
+
+function applyTheme(key) {
+  const t = THEMES[key] || THEMES.workshop;
+  world.style.backgroundColor = t.bg;
+  world.style.backgroundImage = t.pattern;
+  world.style.backgroundSize = t.patternSize || 'auto';
+  document.body.dataset.theme = key;
+  try { localStorage.setItem('machinegame:theme', key); } catch (_) {}
+}
+
+const mapBackdrop = document.getElementById('mapBackdrop');
+const mapGrid = document.getElementById('mapGrid');
+const mapClose = document.getElementById('mapClose');
+const mapBtn = document.getElementById('mapBtn');
+
+function showMapSelect(allowClose) {
+  mapGrid.innerHTML = '';
+  for (const [key, t] of Object.entries(THEMES)) {
+    const card = document.createElement('div');
+    card.className = 'map-card';
+    card.innerHTML =
+      `<span class="emoji">${t.emoji}</span>${t.name}` +
+      `<span class="swatch" style="background:${t.bg}"></span>`;
+    card.addEventListener('click', () => {
+      applyTheme(key);
+      mapBackdrop.hidden = true;
+    });
+    mapGrid.appendChild(card);
+  }
+  mapClose.hidden = !allowClose;
+  mapBackdrop.hidden = false;
+}
+mapClose.addEventListener('click', () => { mapBackdrop.hidden = true; });
+mapBtn.addEventListener('click', () => showMapSelect(true));
+
+// ============================================================================
 // INIT
 // ============================================================================
+const savedTheme = (() => { try { return localStorage.getItem('machinegame:theme'); } catch (_) { return null; }})();
+if (savedTheme && THEMES[savedTheme]) {
+  applyTheme(savedTheme);
+} else {
+  applyTheme('workshop');
+  showMapSelect(false);
+}
 loadInitial();
+// center the world horizontally in the viewport at start
+requestAnimationFrame(() => {
+  const sr = shop.getBoundingClientRect();
+  worldX = Math.min(0, (sr.width  - WORLD_W) / 2);
+  worldY = Math.min(0, (sr.height - WORLD_H) / 2);
+  clampWorld();
+  setWorldTransform();
+});
 </script>
 </body>
 </html>
