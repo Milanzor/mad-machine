@@ -1039,9 +1039,10 @@ function physicsLoop(now) {
     }
   });
 
-  // --- Robots: randomly pick up a nearby part and place it somewhere else ---
+  // --- Robots: drive to a part, touch it, carry it to a new spot ---
   const robots = obstacles.filter(o => o.kind === 'robot');
   const activeRobotIds = new Set(robots.map(r => r.el.dataset.id));
+  const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
   robots.forEach(r => {
     const id = r.el.dataset.id;
     let s = robotState.get(id);
@@ -1062,52 +1063,79 @@ function physicsLoop(now) {
       if (!candidates.length) { s.nextAt = now + 700; return; }
       const target = candidates[Math.floor(Math.random() * candidates.length)];
       target.el.dataset.grabbed = id;
+      const rx = parseFloat(r.el.style.left) || 0;
+      const ry = parseFloat(r.el.style.top)  || 0;
+      const tx = parseFloat(target.el.style.left) || 0;
+      const ty = parseFloat(target.el.style.top)  || 0;
+      // approach from below so robot's claws touch the part's underside
+      let destX = tx;
+      let destY = ty + 70; // robot ends up just below target → they overlap a bit
+      destX = Math.max(0, Math.min(W - 90, destX));
+      destY = Math.max(0, Math.min(H - 90, destY));
       s.targetEl = target.el;
-      s.fromX = parseFloat(target.el.style.left) || 0;
-      s.fromY = parseFloat(target.el.style.top)  || 0;
-      s.toX = r.cx - 45;
-      s.toY = r.cy - 45 - 30; // hover above the robot
+      s.startX = rx; s.startY = ry;
+      s.destX = destX; s.destY = destY;
+      const dist = Math.hypot(destX - rx, destY - ry);
       s.animStart = now;
-      s.animDur = 480;
-      s.phase = 'grabbing';
+      s.animDur = Math.max(400, Math.min(1400, dist * 2.5));
+      s.phase = 'seeking';
       VOICES.beep(0);
-      hitPart(r.el, true);
-    } else if (s.phase === 'grabbing' || s.phase === 'placing') {
+    } else if (s.phase === 'seeking') {
       if (!s.targetEl || !s.targetEl.isConnected) {
-        s.phase = 'idle';
-        s.nextAt = now + 600;
-        s.targetEl = null;
-        return;
+        s.phase = 'idle'; s.nextAt = now + 600; s.targetEl = null; return;
       }
       const t = Math.min(1, (now - s.animStart) / s.animDur);
-      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      const x = s.fromX + (s.toX - s.fromX) * ease;
-      const y = s.fromY + (s.toY - s.fromY) * ease;
-      s.targetEl.style.left = x + 'px';
-      s.targetEl.style.top  = y + 'px';
-      // keep marble physics state in sync if a marble somehow got grabbed
-      const m = marbles.find(mm => mm.el === s.targetEl);
-      if (m) { m.x = x; m.y = y; m.vx = 0; m.vy = 0; }
+      const e = ease(t);
+      r.el.style.left = (s.startX + (s.destX - s.startX) * e) + 'px';
+      r.el.style.top  = (s.startY + (s.destY - s.startY) * e) + 'px';
       if (t >= 1) {
-        if (s.phase === 'grabbing') {
-          let nx, ny, tries = 0;
-          do {
-            nx = Math.random() * Math.max(1, W - 90);
-            ny = Math.random() * Math.max(1, H - 90);
-            tries++;
-          } while (tries < 6 && Math.hypot(nx + 45 - r.cx, ny + 45 - r.cy) < 140);
-          s.fromX = s.toX; s.fromY = s.toY;
-          s.toX = nx; s.toY = ny;
-          s.animStart = now;
-          s.animDur = 620;
-          s.phase = 'placing';
-        } else {
-          delete s.targetEl.dataset.grabbed;
-          hitPart(s.targetEl, true);
-          s.targetEl = null;
-          s.phase = 'idle';
-          s.nextAt = now + 1400 + Math.random() * 2200;
-        }
+        // touched! capture current target offset, pick drop spot, start carrying
+        hitPart(s.targetEl, true);
+        hitPart(r.el, true);
+        const tx = parseFloat(s.targetEl.style.left) || 0;
+        const ty = parseFloat(s.targetEl.style.top)  || 0;
+        s.targetStartOX = tx - s.destX;
+        s.targetStartOY = ty - s.destY;
+        // pick a drop spot away from current position
+        let dx, dy, tries = 0;
+        do {
+          dx = Math.random() * Math.max(1, W - 90);
+          dy = Math.random() * Math.max(1, H - 90);
+          tries++;
+        } while (tries < 6 && Math.hypot(dx - s.destX, dy - s.destY) < 180);
+        s.startX = s.destX; s.startY = s.destY;
+        s.destX = dx; s.destY = dy;
+        const dist = Math.hypot(s.destX - s.startX, s.destY - s.startY);
+        s.animStart = now;
+        s.animDur = Math.max(500, Math.min(1600, dist * 2.5));
+        s.phase = 'carrying';
+      }
+    } else if (s.phase === 'carrying') {
+      if (!s.targetEl || !s.targetEl.isConnected) {
+        s.phase = 'idle'; s.nextAt = now + 600; s.targetEl = null; return;
+      }
+      const t = Math.min(1, (now - s.animStart) / s.animDur);
+      const e = ease(t);
+      const x = s.startX + (s.destX - s.startX) * e;
+      const y = s.startY + (s.destY - s.startY) * e;
+      r.el.style.left = x + 'px';
+      r.el.style.top  = y + 'px';
+      // smoothly lift the target onto the robot's head (offset → (0, -50)) over first half
+      const liftT = Math.min(1, t * 2);
+      const ox = s.targetStartOX + (0   - s.targetStartOX) * liftT;
+      const oy = s.targetStartOY + (-50 - s.targetStartOY) * liftT;
+      s.targetEl.style.left = (x + ox) + 'px';
+      s.targetEl.style.top  = (y + oy) + 'px';
+      if (t >= 1) {
+        // drop it next to the robot
+        s.targetEl.style.left = x + 'px';
+        s.targetEl.style.top  = (y - 70) + 'px'; // place above robot, just out of overlap
+        delete s.targetEl.dataset.grabbed;
+        hitPart(s.targetEl, true);
+        VOICES.beep(0);
+        s.targetEl = null;
+        s.phase = 'idle';
+        s.nextAt = now + 1000 + Math.random() * 1500;
       }
     }
   });
