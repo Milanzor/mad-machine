@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>Mad Machine Workshop</title>
+<title>Gekke Machine Werkplaats</title>
 <style>
   :root {
     --paper: #f4ead5;
@@ -29,7 +29,7 @@
   }
   body {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 280px 1fr;
     grid-template-rows: 64px 1fr 84px;
     grid-template-areas:
       "header header"
@@ -37,7 +37,7 @@
       "bin    controls";
   }
   @media (max-width: 700px) {
-    body { grid-template-columns: 160px 1fr; }
+    body { grid-template-columns: 200px 1fr; }
   }
   header {
     grid-area: header;
@@ -70,16 +70,41 @@
     grid-area: bin;
     background: var(--paper-2);
     border-right: 4px solid #c9b88c;
-    padding: 12px 10px;
-    overflow-y: auto; overflow-x: hidden;
+    padding: 10px 8px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
     touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
   }
   .bin h2 {
     font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
-    color: #6b5a3e; margin: 4px 0 10px 4px;
+    color: #6b5a3e; margin: 4px 0 6px 4px;
+    flex-shrink: 0;
   }
-  .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .bin-scroll {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding: 4px 2px;
+    scroll-behavior: smooth;
+  }
+  .bin-scroll::-webkit-scrollbar { width: 6px; }
+  .bin-scroll::-webkit-scrollbar-thumb { background: #c9b88c; border-radius: 3px; }
+  .bin-arrow {
+    flex-shrink: 0;
+    background: #6b5a3e;
+    color: #fff8e7;
+    border: 3px solid #2a2118;
+    border-radius: 12px;
+    box-shadow: 0 3px 0 #2a2118;
+    font-size: 22px; font-weight: bold;
+    line-height: 1; padding: 6px 0;
+    margin: 4px 4px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .bin-arrow:hover { background: #78350f; }
+  .bin-arrow:active { transform: translateY(2px); box-shadow: 0 1px 0 #2a2118; }
+  .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .bin-item {
     aspect-ratio: 1;
     background: #fff8e7;
@@ -112,6 +137,45 @@
     cursor: grab;
   }
   .shop.panning { cursor: grabbing; }
+  .shop-controls {
+    position: absolute;
+    right: 10px; bottom: 10px;
+    display: flex; align-items: end; gap: 8px;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .pan-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 38px);
+    grid-template-rows: repeat(3, 38px);
+    gap: 4px;
+    pointer-events: none;
+  }
+  .pan-pad #panUp     { grid-column: 2; grid-row: 1; }
+  .pan-pad #panLeft   { grid-column: 1; grid-row: 2; }
+  .pan-pad #panCenter { grid-column: 2; grid-row: 2; }
+  .pan-pad #panRight  { grid-column: 3; grid-row: 2; }
+  .pan-pad #panDown   { grid-column: 2; grid-row: 3; }
+  .zoom-pad {
+    display: flex; flex-direction: column; gap: 4px;
+    pointer-events: none;
+  }
+  .shop-btn {
+    pointer-events: auto;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(42,33,24,.85);
+    color: #fff8e7;
+    border: 2px solid #1a140d;
+    box-shadow: 0 3px 0 rgba(0,0,0,.4);
+    font-size: 16px; font-weight: bold;
+    cursor: pointer;
+    display: grid; place-items: center;
+    line-height: 1; padding: 0;
+    touch-action: manipulation;
+  }
+  .shop-btn:hover { background: #5b4a33; }
+  .shop-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.4); }
   .world {
     position: absolute;
     top: 0; left: 0;
@@ -367,6 +431,21 @@
     animation: shake .12s linear infinite !important;
   }
 
+  /* Theme decorations (non-interactive scenery on the world) */
+  .deco {
+    position: absolute;
+    pointer-events: none;
+    opacity: .55;
+    z-index: 0;
+  }
+  .deco svg { width: 100%; height: 100%; display: block; }
+  @keyframes drift {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
+  }
+  .deco.drifty { animation: drift 4s ease-in-out infinite; }
+  .deco.twinkle { animation: glow 2s ease-in-out infinite; }
+
   /* Animations */
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes spin-rev { to { transform: rotate(-360deg); } }
@@ -502,35 +581,52 @@
 <body>
 
 <header>
-  <h1>🔧 Mad Machine Workshop <span class="squiggle">~*~</span></h1>
-  <div class="machine-name" id="machineName">untitled contraption</div>
+  <h1>🔧 Gekke Machine Werkplaats <span class="squiggle">~*~</span></h1>
+  <div class="machine-name" id="machineName">naamloze machine</div>
 </header>
 
 <aside class="bin">
-  <h2>Junk Drawer</h2>
-  <div class="bin-grid" id="binGrid"></div>
+  <h2 id="binTitle">Rommellade</h2>
+  <button class="bin-arrow" id="binUp" aria-label="Omhoog">▲</button>
+  <div class="bin-scroll" id="binScroll">
+    <div class="bin-grid" id="binGrid"></div>
+  </div>
+  <button class="bin-arrow" id="binDown" aria-label="Omlaag">▼</button>
 </aside>
 
 <section class="shop" id="shop">
   <div class="world" id="world"></div>
-  <div class="hint">← tap any thingy to add it!<br><small style="font-size:14px">drop a marble and press RUN ✨ &middot; drag empty space to pan</small></div>
+  <div class="hint" id="hint">← tik op een dingetje om het toe te voegen!<br><small style="font-size:14px">leg een knikker en druk op START ✨ &middot; sleep lege ruimte om te slepen</small></div>
+  <div class="shop-controls" id="shopControls">
+    <div class="pan-pad">
+      <button class="shop-btn" id="panUp" aria-label="Omhoog">▲</button>
+      <button class="shop-btn" id="panLeft" aria-label="Links">◄</button>
+      <button class="shop-btn" id="panCenter" aria-label="Midden">⊙</button>
+      <button class="shop-btn" id="panRight" aria-label="Rechts">►</button>
+      <button class="shop-btn" id="panDown" aria-label="Omlaag">▼</button>
+    </div>
+    <div class="zoom-pad">
+      <button class="shop-btn" id="zoomIn" aria-label="Inzoomen">＋</button>
+      <button class="shop-btn" id="zoomOut" aria-label="Uitzoomen">－</button>
+    </div>
+  </div>
 </section>
 
 <footer class="controls">
-  <div class="count" id="count">0 parts</div>
-  <button class="btn btn-icon" id="mapBtn" title="Pick map">🗺️</button>
-  <button class="btn btn-icon btn-undo" id="undoBtn" title="Undo">↶</button>
-  <button class="btn btn-icon" id="historyBtn" title="History">📜</button>
-  <button class="btn btn-icon" id="shareBtn" title="Save / Load">💾</button>
-  <button class="btn btn-icon" id="soundBtn" title="Sound">🔊</button>
-  <button class="btn btn-surprise" id="surpriseBtn">🎲 Surprise!</button>
-  <button class="btn btn-clear" id="clearBtn">💥 Clear</button>
-  <button class="btn btn-run" id="runBtn">▶ RUN!</button>
+  <div class="count" id="count">0 onderdelen</div>
+  <button class="btn btn-icon" id="mapBtn" title="Kies wereld">🗺️</button>
+  <button class="btn btn-icon btn-undo" id="undoBtn" title="Ongedaan maken">↶</button>
+  <button class="btn btn-icon" id="historyBtn" title="Geschiedenis">📜</button>
+  <button class="btn btn-icon" id="shareBtn" title="Opslaan / Laden">💾</button>
+  <button class="btn btn-icon" id="soundBtn" title="Geluid">🔊</button>
+  <button class="btn btn-surprise" id="surpriseBtn">🎲 Verras me!</button>
+  <button class="btn btn-clear" id="clearBtn">💥 Wissen</button>
+  <button class="btn btn-run" id="runBtn">▶ START!</button>
 </footer>
 
 <aside class="history-panel" id="historyPanel">
   <header>
-    <h3>📜 History (last 30)</h3>
+    <h3>📜 Geschiedenis (laatste 30)</h3>
     <button class="panel-close" id="historyClose">×</button>
   </header>
   <ul class="history-list" id="historyList"></ul>
@@ -539,7 +635,7 @@
 <div class="modal-backdrop" id="mapBackdrop" hidden>
   <div class="modal map-modal">
     <header>
-      <h3>🗺️ Pick a map!</h3>
+      <h3>🗺️ Kies een wereld!</h3>
       <button class="panel-close" id="mapClose" hidden>×</button>
     </header>
     <div class="modal-body">
@@ -551,23 +647,23 @@
 <div class="modal-backdrop" id="modalBackdrop" hidden>
   <div class="modal">
     <header>
-      <h3>💾 Save / Load your build</h3>
+      <h3>💾 Opslaan / Laden</h3>
       <button class="panel-close" id="modalClose">×</button>
     </header>
     <div class="modal-body">
       <div class="modal-section">
-        <label for="exportText">Copy this code to save your build:</label>
+        <label for="exportText">Kopieer deze code om je bouwsel op te slaan:</label>
         <textarea id="exportText" readonly></textarea>
         <div class="modal-btn-row">
-          <button class="btn btn-icon modal-btn" id="copyBtn">📋 Copy code</button>
+          <button class="btn btn-icon modal-btn" id="copyBtn">📋 Code kopiëren</button>
         </div>
       </div>
       <hr/>
       <div class="modal-section">
-        <label for="importText">Paste a code here to load:</label>
-        <textarea id="importText" placeholder="paste your code here..."></textarea>
+        <label for="importText">Plak hier een code om te laden:</label>
+        <textarea id="importText" placeholder="plak hier je code..."></textarea>
         <div class="modal-btn-row">
-          <button class="btn btn-surprise modal-btn" id="loadBtn">✨ Load it!</button>
+          <button class="btn btn-surprise modal-btn" id="loadBtn">✨ Laden!</button>
         </div>
         <div class="modal-msg" id="loadMsg"></div>
       </div>
@@ -590,7 +686,7 @@
 
 const PARTS = {
   gear: {
-    name: "Gear", anim: "anim-spin", voice: "whirr",
+    name: "Tandwiel", anim: "anim-spin", voice: "whirr",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <g fill="#8b5cf6" stroke="#2a2118" stroke-width="3" stroke-linejoin="round">
         <path d="M50 8 l8 10 12-3 4 12 12 4 -3 12 10 8 -10 8 3 12 -12 4 -4 12 -12-3 -8 10 -8-10 -12 3 -4-12 -12-4 3-12 -10-8 10-8 -3-12 12-4 4-12 12 3z"/>
@@ -600,7 +696,7 @@ const PARTS = {
     </svg>`
   },
   wheel: {
-    name: "Wheel", anim: "anim-roll", voice: "whirr",
+    name: "Wiel", anim: "anim-roll", voice: "whirr",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <circle cx="50" cy="50" r="40" fill="#a16207" stroke="#2a2118" stroke-width="3"/>
       <circle cx="50" cy="50" r="32" fill="#b45309" stroke="#78350f" stroke-width="2"/>
@@ -615,7 +711,7 @@ const PARTS = {
     </svg>`
   },
   spring: {
-    name: "Spring", anim: "anim-bounce", voice: "boing",
+    name: "Veer", anim: "anim-bounce", voice: "boing",
     bouncy: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <g fill="none" stroke="#94a3b8" stroke-width="6" stroke-linecap="round">
@@ -626,7 +722,7 @@ const PARTS = {
     </svg>`
   },
   cable: {
-    name: "Cable", anim: "anim-wiggle", voice: "buzz",
+    name: "Kabel", anim: "anim-wiggle", voice: "buzz",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M15 80 C 25 20, 40 90, 50 50 S 75 10, 90 30"
             stroke="#ef4444" stroke-width="9" fill="none" stroke-linecap="round"/>
@@ -637,7 +733,7 @@ const PARTS = {
     </svg>`
   },
   whisk: {
-    name: "Whisk", anim: "anim-spinfast", voice: "whisk",
+    name: "Garde", anim: "anim-spinfast", voice: "whisk",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <rect x="44" y="8" width="12" height="34" rx="3" fill="#78350f" stroke="#2a2118" stroke-width="2"/>
       <rect x="42" y="38" width="16" height="6" fill="#9ca3af" stroke="#2a2118" stroke-width="2"/>
@@ -651,7 +747,7 @@ const PARTS = {
     </svg>`
   },
   spatula: {
-    name: "Spatula", anim: "anim-flip", voice: "flap",
+    name: "Spatel", anim: "anim-flip", voice: "flap",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <rect x="44" y="50" width="12" height="46" rx="3" fill="#78350f" stroke="#2a2118" stroke-width="2"/>
       <rect x="20" y="20" width="60" height="36" rx="6" fill="#dc2626" stroke="#2a2118" stroke-width="3"/>
@@ -664,7 +760,7 @@ const PARTS = {
     </svg>`
   },
   fan: {
-    name: "Fan", anim: "anim-spinrev", voice: "windy",
+    name: "Ventilator", anim: "anim-spinrev", voice: "windy",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <g fill="#3b82f6" stroke="#2a2118" stroke-width="3">
         <ellipse cx="50" cy="24" rx="10" ry="22"/>
@@ -677,7 +773,7 @@ const PARTS = {
     </svg>`
   },
   box: {
-    name: "Cardboard", anim: "anim-shake", voice: "thud",
+    name: "Karton", anim: "anim-shake", voice: "thud",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M10 30 L50 12 L90 30 L50 48 Z" fill="#d97706" stroke="#2a2118" stroke-width="3"/>
       <path d="M10 30 V80 L50 96 V48 Z" fill="#b45309" stroke="#2a2118" stroke-width="3"/>
@@ -717,7 +813,7 @@ const PARTS = {
     </svg>`
   },
   car: {
-    name: "Toy car", anim: "anim-drive", voice: "vroom",
+    name: "Speelgoedauto", anim: "anim-drive", voice: "vroom",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M10 70 L20 50 L40 40 L70 40 L90 60 L90 70 Z" fill="#06b6d4" stroke="#2a2118" stroke-width="3"/>
       <rect x="38" y="44" width="22" height="14" fill="#7dd3fc" stroke="#2a2118" stroke-width="2"/>
@@ -728,7 +824,7 @@ const PARTS = {
     </svg>`
   },
   bouncycar: {
-    name: "Bouncy car", anim: "anim-bouncedrive", voice: "vroom",
+    name: "Stuiterauto", anim: "anim-bouncedrive", voice: "vroom",
     bouncy: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M10 70 L20 48 L40 36 L70 36 L90 58 L90 70 Z" fill="#ec4899" stroke="#2a2118" stroke-width="3"/>
@@ -744,14 +840,14 @@ const PARTS = {
     </svg>`
   },
   rubber: {
-    name: "Rubber band", anim: "anim-stretch", voice: "twang",
+    name: "Elastiek", anim: "anim-stretch", voice: "twang",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <ellipse cx="50" cy="60" rx="34" ry="20" fill="none" stroke="#e11d48" stroke-width="10"/>
       <ellipse cx="50" cy="60" rx="34" ry="20" fill="none" stroke="#fbcfe8" stroke-width="3"/>
     </svg>`
   },
   marble: {
-    name: "Marble", anim: "", voice: "plink",
+    name: "Knikker", anim: "", voice: "plink",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <circle cx="50" cy="50" r="38" fill="#3b82f6" stroke="#2a2118" stroke-width="3"/>
       <circle cx="50" cy="50" r="32" fill="#60a5fa"/>
@@ -760,7 +856,7 @@ const PARTS = {
     </svg>`
   },
   lava: {
-    name: "Lava bucket", anim: "anim-bubble", voice: "sizzle",
+    name: "Lava-emmer", anim: "anim-bubble", voice: "sizzle",
     lava: true, fireproof: true, danger: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M 22 30 Q 50 6 78 30" fill="none" stroke="#1f2937" stroke-width="3" stroke-linecap="round"/>
@@ -798,7 +894,7 @@ const PARTS = {
     </svg>`
   },
   mouse: {
-    name: "Mouse", anim: "", voice: "squeak", mouse: true,
+    name: "Muis", anim: "", voice: "squeak", mouse: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M 88 64 Q 72 74, 78 54" stroke="#6b7280" stroke-width="4" fill="none" stroke-linecap="round"/>
       <ellipse cx="55" cy="64" rx="30" ry="20" fill="#9ca3af" stroke="#2a2118" stroke-width="3"/>
@@ -817,7 +913,7 @@ const PARTS = {
     </svg>`
   },
   dinoEgg: {
-    name: "Dino Egg", anim: "anim-wiggle", voice: "ping", hatches: true,
+    name: "Dino-ei", anim: "anim-wiggle", voice: "ping", hatches: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <ellipse cx="50" cy="58" rx="32" ry="40" fill="#fde68a" stroke="#2a2118" stroke-width="3"/>
       <ellipse cx="40" cy="42" rx="10" ry="14" fill="#fef3c7" opacity=".8"/>
@@ -829,7 +925,7 @@ const PARTS = {
     </svg>`
   },
   dino: {
-    name: "Dinosaur", anim: "", voice: "boom", hidden: true, dino: true,
+    name: "Dinosaurus", anim: "", voice: "boom", hidden: true, dino: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M 92 70 L 76 52 L 70 64 Z" fill="#16a34a" stroke="#2a2118" stroke-width="2.5"/>
       <ellipse cx="56" cy="62" rx="26" ry="18" fill="#22c55e" stroke="#2a2118" stroke-width="3"/>
@@ -845,7 +941,7 @@ const PARTS = {
     </svg>`
   },
   cheese: {
-    name: "Cheese", anim: "anim-glow", voice: "ping", cheese: true,
+    name: "Kaas", anim: "anim-glow", voice: "ping", cheese: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M 12 78 L 88 78 L 80 30 Z" fill="#fbbf24" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
       <path d="M 12 78 L 88 78 L 88 84 L 12 84 Z" fill="#d97706" stroke="#2a2118" stroke-width="2"/>
@@ -857,7 +953,7 @@ const PARTS = {
     </svg>`
   },
   volcano: {
-    name: "Volcano", anim: "anim-rumble", voice: "boom",
+    name: "Vulkaan", anim: "anim-rumble", voice: "boom",
     erupts: true, fireproof: true, danger: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M 6 92 L 34 25 L 66 25 L 94 92 Z" fill="#78350f" stroke="#2a2118" stroke-width="3"/>
@@ -954,17 +1050,38 @@ const shop = document.getElementById("shop");
 const world = document.getElementById("world");
 const WORLD_W = 3000, WORLD_H = 2000;
 let worldX = 0, worldY = 0;
+let worldScale = 0.7;
 let nextId = 1;
 let dragging = null;
 let dragOffset = { x: 0, y: 0 };
 
 function setWorldTransform() {
-  world.style.transform = `translate(${worldX}px, ${worldY}px)`;
+  world.style.transform = `translate(${worldX}px, ${worldY}px) scale(${worldScale})`;
 }
 function clampWorld() {
   const sr = shop.getBoundingClientRect();
-  worldX = Math.min(0, Math.max(sr.width  - WORLD_W, worldX));
-  worldY = Math.min(0, Math.max(sr.height - WORLD_H, worldY));
+  const minX = Math.min(0, sr.width  - WORLD_W * worldScale);
+  const minY = Math.min(0, sr.height - WORLD_H * worldScale);
+  worldX = Math.min(0, Math.max(minX, worldX));
+  worldY = Math.min(0, Math.max(minY, worldY));
+}
+function zoomBy(factor) {
+  const sr = shop.getBoundingClientRect();
+  const cx = sr.width / 2, cy = sr.height / 2;
+  // world coord under viewport center
+  const wcX = (cx - worldX) / worldScale;
+  const wcY = (cy - worldY) / worldScale;
+  worldScale = Math.max(0.4, Math.min(1.8, worldScale * factor));
+  worldX = cx - wcX * worldScale;
+  worldY = cy - wcY * worldScale;
+  clampWorld();
+  setWorldTransform();
+}
+function panBy(dx, dy) {
+  worldX += dx;
+  worldY += dy;
+  clampWorld();
+  setWorldTransform();
 }
 setWorldTransform();
 
@@ -1009,7 +1126,7 @@ function positionLocal(el, localX, localY) {
 
 function spawnPartFromClient(kind, clientX, clientY) {
   const wr = world.getBoundingClientRect();
-  spawnPartLocal(kind, clientX - wr.left - 45, clientY - wr.top - 45);
+  spawnPartLocal(kind, (clientX - wr.left) / worldScale - 45, (clientY - wr.top) / worldScale - 45);
 }
 
 function attachPartHandlers(el) {
@@ -1030,7 +1147,9 @@ function attachPartHandlers(el) {
   el.addEventListener("pointermove", (e) => {
     if (dragging === el) {
       const wr = world.getBoundingClientRect();
-      positionLocal(el, e.clientX - wr.left - dragOffset.x - 45, e.clientY - wr.top - dragOffset.y - 45);
+      positionLocal(el,
+        (e.clientX - wr.left) / worldScale - dragOffset.x - 45,
+        (e.clientY - wr.top)  / worldScale - dragOffset.y - 45);
     }
   });
   const release = () => {
@@ -1052,9 +1171,13 @@ function deletePart(el) {
 
 function spawnInShopRandom(kind) {
   const sr = shop.getBoundingClientRect();
-  // spawn within the currently-visible portion of the world
-  const localX = (-worldX) + sr.width  * (0.25 + Math.random() * 0.5) - 45;
-  const localY = (-worldY) + sr.height * (0.25 + Math.random() * 0.5) - 45;
+  // spawn within the currently-visible portion of the world (account for scale)
+  const vx0 = -worldX / worldScale;
+  const vy0 = -worldY / worldScale;
+  const vw  = sr.width  / worldScale;
+  const vh  = sr.height / worldScale;
+  const localX = vx0 + vw * (0.25 + Math.random() * 0.5) - 45;
+  const localY = vy0 + vh * (0.25 + Math.random() * 0.5) - 45;
   spawnPartLocal(kind, localX, localY);
 }
 
@@ -1817,7 +1940,7 @@ function destroyByFire(el) {
   if (!el.parentNode) return;
   const r = el.getBoundingClientRect();
   const wr = world.getBoundingClientRect();
-  particleBurst(r.left - wr.left + 45, r.top - wr.top + 45, ['#dc2626','#fbbf24','#7c2d12','#451a03']);
+  particleBurst((r.left - wr.left) / worldScale + 45, (r.top - wr.top) / worldScale + 45, ['#dc2626','#fbbf24','#7c2d12','#451a03']);
   el.animate(
     [{ transform: 'scale(1) rotate(0)', opacity: 1, filter: 'brightness(1)' },
      { transform: 'scale(1.3) rotate(30deg)', opacity: 0, filter: 'brightness(3) sepia(1)' }],
@@ -1864,12 +1987,12 @@ function hitPart(el, force = false) {
 const countEl = document.getElementById("count");
 function updateCount() {
   const n = shop.querySelectorAll(".part").length;
-  countEl.textContent = n + (n === 1 ? " part" : " parts");
+  countEl.textContent = n + (n === 1 ? " onderdeel" : " onderdelen");
   shop.classList.toggle("has-parts", n > 0);
 }
 
-const ADJ  = ["Mighty","Wobbly","Bonkers","Mega","Turbo","Sneaky","Crispy","Soggy","Galactic","Cosmic","Stinky","Zany","Fluffy","Quantum","Atomic","Volcanic","Molten"];
-const NOUN = ["Whatsit","Doohickey","Thingamajig","Gizmo","Contraption","Machine","Wobbler","Spinner","Smasher","Hooter","Tooter","O-Matic","Engine","Eruptor"];
+const ADJ  = ["Machtige","Wiebelende","Geschifte","Mega","Turbo","Stiekeme","Krokante","Drassige","Galactische","Kosmische","Stinkende","Wilde","Pluizige","Quantum","Atomische","Vulkanische","Smeltende"];
+const NOUN = ["Dingetje","Apparaatje","Vehikel","Gadget","Constructie","Machine","Wiebelaar","Draaier","Vermorzelaar","Toeteraar","Toeter","O-Matic","Motor","Uitbarster"];
 const SUFFIX = ["2000","3000","5000","XL","Pro","Mark II","Mark VII","Deluxe","Supreme","9001"];
 function generateName(partsUsed) {
   const a = ADJ[Math.floor(Math.random()*ADJ.length)];
@@ -1877,9 +2000,9 @@ function generateName(partsUsed) {
   const s = SUFFIX[Math.floor(Math.random()*SUFFIX.length)];
   if (partsUsed.length && Math.random() < 0.6) {
     const featured = PARTS[partsUsed[Math.floor(Math.random()*partsUsed.length)]].name;
-    return `The ${a} ${featured}-${n} ${s}!`;
+    return `De ${a} ${featured}-${n} ${s}!`;
   }
-  return `The ${a} ${n} ${s}!`;
+  return `De ${a} ${n} ${s}!`;
 }
 
 // ============================================================================
@@ -1981,7 +2104,7 @@ function renderHistory() {
   if (!history.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = "Nothing here yet — start building and your history shows up here.";
+    empty.textContent = "Nog niets — begin met bouwen en je geschiedenis komt hier.";
     historyList.appendChild(empty);
     return;
   }
@@ -1991,8 +2114,8 @@ function renderHistory() {
     const stepNum = i + 1;
     li.innerHTML = `
       <div>
-        <div class="step">Step ${stepNum}</div>
-        <div class="info">${snap.parts.length} ${snap.parts.length === 1 ? "part" : "parts"} • ${timeAgo(snap.t)}</div>
+        <div class="step">Stap ${stepNum}</div>
+        <div class="info">${snap.parts.length} ${snap.parts.length === 1 ? "onderdeel" : "onderdelen"} • ${timeAgo(snap.t)}</div>
       </div>
       <div style="font-size:18px">↶</div>`;
     li.addEventListener("click", () => {
@@ -2009,11 +2132,11 @@ function renderHistory() {
 }
 function timeAgo(t) {
   const s = Math.floor((Date.now() - t) / 1000);
-  if (s < 5) return "just now";
-  if (s < 60) return s + "s ago";
-  if (s < 3600) return Math.floor(s / 60) + "m ago";
-  if (s < 86400) return Math.floor(s / 3600) + "h ago";
-  return Math.floor(s / 86400) + "d ago";
+  if (s < 5) return "net";
+  if (s < 60) return s + "s geleden";
+  if (s < 3600) return Math.floor(s / 60) + "m geleden";
+  if (s < 86400) return Math.floor(s / 3600) + "u geleden";
+  return Math.floor(s / 86400) + "d geleden";
 }
 
 // ============================================================================
@@ -2030,9 +2153,9 @@ function exportBuild() {
 }
 
 function importBuild(str) {
-  if (typeof str !== "string") return { ok: false, msg: "Empty code." };
+  if (typeof str !== "string") return { ok: false, msg: "Lege code." };
   str = str.trim();
-  if (!str) return { ok: false, msg: "Paste a code first!" };
+  if (!str) return { ok: false, msg: "Plak eerst een code!" };
 
   let data = null;
   try {
@@ -2040,15 +2163,14 @@ function importBuild(str) {
       const b64 = str.split(":").slice(1).join(":");
       data = JSON.parse(atob(b64));
     } else {
-      // be lenient: accept raw json or raw base64
       try { data = JSON.parse(str); }
       catch { data = JSON.parse(atob(str)); }
     }
   } catch (e) {
-    return { ok: false, msg: "Doesn't look like a Machine Workshop code." };
+    return { ok: false, msg: "Dat lijkt geen Werkplaats-code." };
   }
   if (!data || !Array.isArray(data.parts)) {
-    return { ok: false, msg: "Code is missing the parts list." };
+    return { ok: false, msg: "Code mist de onderdelenlijst." };
   }
 
   const validParts = data.parts.filter(p => p && typeof p.kind === "string" && p.kind in PARTS);
@@ -2057,8 +2179,8 @@ function importBuild(str) {
   applySnapshot({ parts: validParts });
   saveAndPush();
 
-  let msg = `Loaded ${validParts.length} ${validParts.length === 1 ? "part" : "parts"}!`;
-  if (skipped > 0) msg += ` (${skipped} unknown part${skipped === 1 ? "" : "s"} skipped)`;
+  let msg = `${validParts.length} ${validParts.length === 1 ? "onderdeel" : "onderdelen"} geladen!`;
+  if (skipped > 0) msg += ` (${skipped} onbekend${skipped === 1 ? "" : "e"} overgeslagen)`;
   return { ok: true, msg };
 }
 
@@ -2095,7 +2217,7 @@ copyBtn.addEventListener("click", async () => {
   } catch (e) {
     try { ok = document.execCommand("copy"); } catch {}
   }
-  copyBtn.textContent = ok ? "✅ Copied!" : "Select & copy manually";
+  copyBtn.textContent = ok ? "✅ Gekopieerd!" : "Selecteer & kopieer zelf";
   setTimeout(() => copyBtn.textContent = "📋 Copy code", 1800);
 });
 
@@ -2126,7 +2248,7 @@ runBtn.addEventListener("click", () => {
 function run() {
   const parts = [...shop.querySelectorAll(".part")];
   if (!parts.length) {
-    machineName.textContent = "...build something first, silly!";
+    machineName.textContent = "...bouw eerst iets, gekkie!";
     return;
   }
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
@@ -2140,7 +2262,7 @@ function run() {
   }));
 
   document.body.classList.add("running");
-  runBtn.textContent = "■ STOP";
+  runBtn.textContent = "■ STOP!";
   runBtn.classList.add("is-running");
   historyPanel.classList.remove("open");
   modalBackdrop.hidden = true;
@@ -2171,7 +2293,7 @@ function run() {
 
 function stop() {
   document.body.classList.remove("running");
-  runBtn.textContent = "▶ RUN!";
+  runBtn.textContent = "▶ START!";
   runBtn.classList.remove("is-running");
   if (runInterval) { clearInterval(runInterval); runInterval = null; }
   shop.querySelectorAll(".part").forEach(el => el.classList.remove("active", "hit"));
@@ -2199,8 +2321,8 @@ clearBtn.addEventListener("click", () => {
     for (let i = 0; i < 6; i++) {
       const c = document.createElement("div");
       c.className = "confetti";
-      c.style.left = (r.left - wr.left + 40) + "px";
-      c.style.top  = (r.top  - wr.top  + 40) + "px";
+      c.style.left = ((r.left - wr.left) / worldScale + 40) + "px";
+      c.style.top  = ((r.top  - wr.top)  / worldScale + 40) + "px";
       c.style.background = ["#ef4444","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ec4899"][i%6];
       world.appendChild(c);
       const dx = (Math.random() - .5) * 200;
@@ -2215,7 +2337,7 @@ clearBtn.addEventListener("click", () => {
   });
   updateCount();
   tone({ freq: 300, type:"square", dur:.15, vol:.2, slide: -200 });
-  machineName.textContent = "untitled contraption";
+  machineName.textContent = "naamloze machine";
   saveAndPush();
 });
 
@@ -2236,43 +2358,63 @@ soundBtn.addEventListener("click", () => {
 
 undoBtn.addEventListener("click", undo);
 
+// --- Pan / zoom buttons ---
+const PAN_STEP = 140;
+document.getElementById("panUp")    .addEventListener("click", () => panBy(0,  PAN_STEP));
+document.getElementById("panDown")  .addEventListener("click", () => panBy(0, -PAN_STEP));
+document.getElementById("panLeft")  .addEventListener("click", () => panBy( PAN_STEP, 0));
+document.getElementById("panRight") .addEventListener("click", () => panBy(-PAN_STEP, 0));
+document.getElementById("panCenter").addEventListener("click", () => {
+  const sr = shop.getBoundingClientRect();
+  worldX = Math.min(0, (sr.width  - WORLD_W * worldScale) / 2);
+  worldY = Math.min(0, (sr.height - WORLD_H * worldScale) / 2);
+  clampWorld(); setWorldTransform();
+});
+document.getElementById("zoomIn") .addEventListener("click", () => zoomBy(1.2));
+document.getElementById("zoomOut").addEventListener("click", () => zoomBy(1 / 1.2));
+
+// --- Bin scroll arrows ---
+const binScroll = document.getElementById("binScroll");
+document.getElementById("binUp")  .addEventListener("click", () => binScroll.scrollBy({ top: -180, behavior: 'smooth' }));
+document.getElementById("binDown").addEventListener("click", () => binScroll.scrollBy({ top:  180, behavior: 'smooth' }));
+
 // ============================================================================
 // MAPS / THEMES
 // ============================================================================
 const THEMES = {
-  workshop: { name: "Workshop", emoji: "🔧",
+  workshop: { name: "Werkplaats", emoji: "🔧",
     bg: "#f4ead5",
     pattern: "linear-gradient(rgba(120,90,40,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(120,90,40,.07) 1px, transparent 1px)",
     patternSize: "24px 24px" },
-  dino: { name: "Dino Land", emoji: "🦖",
+  dino: { name: "Dinoland", emoji: "🦖",
     bg: "#bbf7d0",
     pattern: "radial-gradient(circle at 30% 40%, rgba(20,83,45,.22) 5px, transparent 8px), radial-gradient(circle at 70% 60%, rgba(101,163,13,.18) 6px, transparent 10px)",
     patternSize: "120px 80px, 160px 100px" },
-  robot: { name: "Robot City", emoji: "🤖",
+  robot: { name: "Robotstad", emoji: "🤖",
     bg: "#cbd5e1",
     pattern: "linear-gradient(rgba(51,65,85,.25) 1px, transparent 1px), linear-gradient(90deg, rgba(51,65,85,.25) 1px, transparent 1px)",
     patternSize: "44px 44px" },
-  ducks: { name: "Ducky Pool", emoji: "🦆",
+  ducks: { name: "Eendenbad", emoji: "🦆",
     bg: "#bae6fd",
     pattern: "radial-gradient(ellipse 22px 7px at center, rgba(255,255,255,.55) 60%, transparent 65%)",
     patternSize: "100px 60px" },
-  mice: { name: "Mouse Town", emoji: "🐭",
+  mice: { name: "Muisstad", emoji: "🐭",
     bg: "#fbcfe8",
     pattern: "radial-gradient(circle, rgba(190,24,93,.18) 3px, transparent 4px), radial-gradient(circle at 50% 50%, rgba(251,191,36,.4) 6px, transparent 9px)",
     patternSize: "44px 44px, 180px 180px" },
-  music: { name: "Music Park", emoji: "🎵",
+  music: { name: "Muziekpark", emoji: "🎵",
     bg: "#ede9fe",
     pattern: "repeating-linear-gradient(0deg, transparent 0 22px, rgba(124,58,237,.45) 22px 24px)",
     patternSize: "100% 130px" },
-  space: { name: "Outer Space", emoji: "🚀",
+  space: { name: "Ruimte", emoji: "🚀",
     bg: "#1e1b4b",
     pattern: "radial-gradient(circle, white 1.4px, transparent 1.8px), radial-gradient(circle, #fde047 1.2px, transparent 1.6px)",
     patternSize: "140px 90px, 220px 170px" },
-  candy: { name: "Candy Land", emoji: "🍬",
+  candy: { name: "Snoepland", emoji: "🍬",
     bg: "#fce7f3",
     pattern: "repeating-linear-gradient(45deg, rgba(236,72,153,.18) 0 10px, transparent 10px 28px), repeating-linear-gradient(-45deg, rgba(251,191,36,.15) 0 10px, transparent 10px 28px)",
     patternSize: "auto" },
-  ocean: { name: "Under Ocean", emoji: "🌊",
+  ocean: { name: "Onderzee", emoji: "🌊",
     bg: "#7dd3fc",
     pattern: "radial-gradient(ellipse 36px 11px at center, rgba(255,255,255,.35) 50%, transparent 60%)",
     patternSize: "100px 38px" },
@@ -2280,14 +2422,67 @@ const THEMES = {
     bg: "#86efac",
     pattern: "radial-gradient(circle at 30% 30%, rgba(20,83,45,.22) 7px, transparent 11px), radial-gradient(circle at 70% 70%, rgba(20,83,45,.16) 4px, transparent 7px)",
     patternSize: "110px 90px, 80px 100px" },
-  farm: { name: "Farm Yard", emoji: "🚜",
+  farm: { name: "Boerderij", emoji: "🚜",
     bg: "#fef3c7",
     pattern: "repeating-linear-gradient(0deg, transparent 0 30px, rgba(180,83,9,.18) 30px 33px), repeating-linear-gradient(90deg, transparent 0 30px, rgba(180,83,9,.12) 30px 33px)",
     patternSize: "auto" },
-  ice: { name: "Ice World", emoji: "❄️",
+  ice: { name: "IJswereld", emoji: "❄️",
     bg: "#e0f2fe",
     pattern: "radial-gradient(circle at 50% 50%, rgba(255,255,255,.7) 4px, transparent 6px), radial-gradient(circle at 30% 70%, rgba(56,189,248,.3) 3px, transparent 5px)",
     patternSize: "70px 70px, 100px 100px" }
+};
+
+const DECORATIONS = {
+  dino: [
+    { count: 10, w: 120, h: 160, fx: '', svg: `<svg viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg"><rect x="52" y="70" width="16" height="80" fill="#78350f"/><path d="M 60 70 Q 20 60, 8 30 Q 36 50, 60 55 Q 84 50, 112 30 Q 100 60, 60 70 Q 30 80, 8 100 Q 30 70, 60 70 Q 90 70, 112 100 Q 90 80, 60 70" fill="#16a34a"/><circle cx="48" cy="34" r="6" fill="#86efac"/><circle cx="68" cy="42" r="5" fill="#86efac"/></svg>` },
+    { count: 18, w: 56, h: 56, fx: 'drifty', svg: `<svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg"><path d="M 28 52 L 28 6" stroke="#15803d" stroke-width="2"/><path d="M 28 12 Q 10 14, 4 24 M 28 22 Q 12 24, 7 34 M 28 32 Q 14 34, 10 42" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M 28 12 Q 46 14, 52 24 M 28 22 Q 44 24, 49 34 M 28 32 Q 42 34, 46 42" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/></svg>` },
+    { count: 8, w: 80, h: 50, fx: '', svg: `<svg viewBox="0 0 80 50" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="32" rx="30" ry="14" fill="rgba(20,83,45,.35)"/><ellipse cx="20" cy="20" rx="5" ry="3" fill="rgba(20,83,45,.5)"/><ellipse cx="58" cy="18" rx="5" ry="3" fill="rgba(20,83,45,.5)"/></svg>` }
+  ],
+  robot: [
+    { count: 14, w: 60, h: 60, fx: '', svg: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><polygon points="30,5 50,15 50,45 30,55 10,45 10,15" fill="#94a3b8" stroke="#475569" stroke-width="2"/><circle cx="30" cy="30" r="10" fill="#475569"/></svg>` },
+    { count: 9, w: 120, h: 60, fx: '', svg: `<svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg"><path d="M 5 30 H 30 L 40 15 H 70 L 80 45 H 115" stroke="#475569" stroke-width="3" fill="none" stroke-linejoin="round"/><circle cx="5" cy="30" r="4" fill="#475569"/><circle cx="115" cy="45" r="4" fill="#475569"/><circle cx="40" cy="15" r="3" fill="#fbbf24"/><circle cx="70" cy="15" r="3" fill="#22c55e"/><circle cx="80" cy="45" r="3" fill="#ef4444"/></svg>` }
+  ],
+  ducks: [
+    { count: 14, w: 80, h: 60, fx: 'drifty', svg: `<svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg"><ellipse cx="44" cy="40" rx="28" ry="14" fill="#fbbf24" stroke="#a16207" stroke-width="2"/><circle cx="22" cy="26" r="13" fill="#fbbf24" stroke="#a16207" stroke-width="2"/><path d="M 11 26 L 2 28 L 11 31 Z" fill="#f97316" stroke="#7c2d12" stroke-width="1.5"/><circle cx="20" cy="22" r="2" fill="#1a1a1a"/><circle cx="60" cy="32" r="3" fill="#fde68a"/></svg>` },
+    { count: 24, w: 40, h: 22, fx: '', svg: `<svg viewBox="0 0 40 22" xmlns="http://www.w3.org/2000/svg"><ellipse cx="20" cy="11" rx="18" ry="5" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/><ellipse cx="20" cy="11" rx="11" ry="3" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"/></svg>` }
+  ],
+  mice: [
+    { count: 12, w: 60, h: 60, fx: '', svg: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><path d="M 5 55 Q 5 15, 30 15 Q 55 15, 55 55 Z" fill="#1a1a1a"/><rect x="3" y="54" width="54" height="4" fill="#78350f"/><circle cx="22" cy="40" r="2" fill="#fff" opacity=".4"/></svg>` },
+    { count: 18, w: 36, h: 30, fx: '', svg: `<svg viewBox="0 0 36 30" xmlns="http://www.w3.org/2000/svg"><polygon points="5,22 30,22 26,8" fill="#fbbf24" stroke="#a16207" stroke-width="1.5"/><circle cx="15" cy="17" r="2.5" fill="#a16207"/><circle cx="22" cy="14" r="1.8" fill="#a16207"/></svg>` }
+  ],
+  music: [
+    { count: 22, w: 36, h: 60, fx: 'drifty', svg: `<svg viewBox="0 0 36 60" xmlns="http://www.w3.org/2000/svg"><ellipse cx="11" cy="50" rx="9" ry="6.5" transform="rotate(-25 11 50)" fill="#7c3aed"/><rect x="19" y="10" width="3" height="42" fill="#7c3aed"/><path d="M 22 10 Q 34 14, 30 28" fill="none" stroke="#7c3aed" stroke-width="3"/></svg>` },
+    { count: 10, w: 44, h: 70, fx: '', svg: `<svg viewBox="0 0 44 70" xmlns="http://www.w3.org/2000/svg"><path d="M 22 60 Q 12 60, 12 48 Q 12 36, 22 36 Q 32 36, 32 26 Q 32 14, 20 14 Q 8 14, 12 32 Q 18 50, 26 64" fill="none" stroke="#7c3aed" stroke-width="3.5" stroke-linecap="round"/></svg>` }
+  ],
+  space: [
+    { count: 10, w: 80, h: 80, fx: '', svg: `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="26" fill="#a78bfa"/><ellipse cx="40" cy="40" rx="38" ry="8" fill="none" stroke="#fde047" stroke-width="2.5"/><circle cx="30" cy="32" r="5" fill="#7c3aed" opacity=".7"/><circle cx="50" cy="48" r="3" fill="#7c3aed" opacity=".7"/></svg>` },
+    { count: 50, w: 18, h: 18, fx: 'twinkle', svg: `<svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><polygon points="9,1 11,7 17,7 12,11 14,17 9,13 4,17 6,11 1,7 7,7" fill="#fde047"/></svg>` },
+    { count: 6, w: 50, h: 50, fx: '', svg: `<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><circle cx="25" cy="25" r="20" fill="#fbbf24"/><circle cx="18" cy="20" r="4" fill="#a16207"/><circle cx="32" cy="28" r="3" fill="#a16207"/></svg>` }
+  ],
+  candy: [
+    { count: 12, w: 36, h: 90, fx: '', svg: `<svg viewBox="0 0 36 90" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="15" fill="#ec4899" stroke="#9d174d" stroke-width="2"/><path d="M 18 5 Q 8 12, 10 22" fill="#fbcfe8" opacity=".7"/><rect x="16" y="28" width="4" height="58" fill="#fff" stroke="#1a1a1a" stroke-width="1.5"/></svg>` },
+    { count: 14, w: 48, h: 60, fx: '', svg: `<svg viewBox="0 0 48 60" xmlns="http://www.w3.org/2000/svg"><path d="M 24 55 V 22 Q 24 8, 36 8 Q 46 8, 46 18" stroke="#ef4444" stroke-width="10" fill="none" stroke-linecap="round"/><path d="M 24 55 V 22 Q 24 8, 36 8 Q 46 8, 46 18" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="7 7"/></svg>` }
+  ],
+  ocean: [
+    { count: 18, w: 36, h: 80, fx: 'drifty', svg: `<svg viewBox="0 0 36 80" xmlns="http://www.w3.org/2000/svg"><path d="M 18 80 Q 6 60, 18 40 Q 30 20, 18 0" stroke="#16a34a" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M 18 80 Q 6 60, 18 40 Q 30 20, 18 0" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/></svg>` },
+    { count: 28, w: 24, h: 24, fx: 'drifty', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.5"/><circle cx="10" cy="10" r="2.5" fill="rgba(255,255,255,.6)"/></svg>` },
+    { count: 6, w: 70, h: 40, fx: '', svg: `<svg viewBox="0 0 70 40" xmlns="http://www.w3.org/2000/svg"><path d="M 5 20 Q 20 5, 40 20 Q 55 35, 65 20 L 60 30 L 65 20 L 60 10 Z" fill="#fb923c" stroke="#7c2d12" stroke-width="2"/><circle cx="22" cy="18" r="2.5" fill="#1a1a1a"/></svg>` }
+  ],
+  jungle: [
+    { count: 12, w: 70, h: 130, fx: 'drifty', svg: `<svg viewBox="0 0 70 130" xmlns="http://www.w3.org/2000/svg"><path d="M 35 0 Q 22 25, 35 50 Q 48 75, 35 100 Q 22 120, 35 130" stroke="#15803d" stroke-width="4" fill="none"/><ellipse cx="20" cy="30" rx="12" ry="6" transform="rotate(-30 20 30)" fill="#22c55e"/><ellipse cx="50" cy="60" rx="12" ry="6" transform="rotate(30 50 60)" fill="#22c55e"/><ellipse cx="22" cy="90" rx="12" ry="6" transform="rotate(-20 22 90)" fill="#22c55e"/></svg>` },
+    { count: 10, w: 64, h: 50, fx: '', svg: `<svg viewBox="0 0 64 50" xmlns="http://www.w3.org/2000/svg"><path d="M 32 45 Q 6 30, 6 14 Q 18 2, 32 7 Q 46 2, 58 14 Q 58 30, 32 45" fill="#16a34a" stroke="#15803d" stroke-width="2.5"/><path d="M 32 45 V 7" stroke="#15803d" stroke-width="2.5"/></svg>` }
+  ],
+  farm: [
+    { count: 8, w: 100, h: 60, fx: '', svg: `<svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="18" width="88" height="36" rx="8" fill="#fbbf24" stroke="#a16207" stroke-width="2.5"/><path d="M 6 24 H 94 M 6 34 H 94 M 6 44 H 94" stroke="#a16207" stroke-width="1.5"/></svg>` },
+    { count: 14, w: 36, h: 70, fx: '', svg: `<svg viewBox="0 0 36 70" xmlns="http://www.w3.org/2000/svg"><rect x="13" y="12" width="10" height="58" fill="#78350f" stroke="#451a03" stroke-width="2"/><polygon points="13,12 23,12 18,4" fill="#451a03"/><rect x="0" y="30" width="36" height="5" fill="#78350f" stroke="#451a03" stroke-width="1.5"/><rect x="0" y="50" width="36" height="5" fill="#78350f" stroke="#451a03" stroke-width="1.5"/></svg>` }
+  ],
+  ice: [
+    { count: 30, w: 36, h: 36, fx: 'twinkle', svg: `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><g stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"><line x1="18" y1="3" x2="18" y2="33"/><line x1="3" y1="18" x2="33" y2="18"/><line x1="7.5" y1="7.5" x2="28.5" y2="28.5"/><line x1="28.5" y1="7.5" x2="7.5" y2="28.5"/></g></svg>` },
+    { count: 12, w: 36, h: 60, fx: '', svg: `<svg viewBox="0 0 36 60" xmlns="http://www.w3.org/2000/svg"><path d="M 6 0 L 18 60 L 30 0 Z" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/><path d="M 14 6 L 18 36" stroke="#fff" stroke-width="2" opacity=".7"/></svg>` }
+  ],
+  workshop: [
+    { count: 14, w: 60, h: 60, fx: '', svg: `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="22" fill="none" stroke="rgba(120,90,40,.25)" stroke-width="3" stroke-dasharray="6 6"/><circle cx="30" cy="30" r="6" fill="rgba(120,90,40,.25)"/></svg>` }
+  ]
 };
 
 function applyTheme(key) {
@@ -2297,6 +2492,25 @@ function applyTheme(key) {
   world.style.backgroundSize = t.patternSize || 'auto';
   document.body.dataset.theme = key;
   try { localStorage.setItem('machinegame:theme', key); } catch (_) {}
+  // refresh decorations
+  world.querySelectorAll('.deco').forEach(el => el.remove());
+  const decos = DECORATIONS[key];
+  if (decos) {
+    const firstPart = world.querySelector('.part');
+    decos.forEach(d => {
+      for (let i = 0; i < d.count; i++) {
+        const el = document.createElement('div');
+        el.className = 'deco' + (d.fx ? ' ' + d.fx : '');
+        el.innerHTML = d.svg;
+        el.style.left   = Math.floor(Math.random() * (WORLD_W - d.w)) + 'px';
+        el.style.top    = Math.floor(Math.random() * (WORLD_H - d.h)) + 'px';
+        el.style.width  = d.w + 'px';
+        el.style.height = d.h + 'px';
+        el.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+        world.insertBefore(el, firstPart || null);
+      }
+    });
+  }
 }
 
 const mapBackdrop = document.getElementById('mapBackdrop');
