@@ -79,7 +79,7 @@
     font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
     color: #6b5a3e; margin: 4px 0 10px 4px;
   }
-  .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .bin-item {
     aspect-ratio: 1;
     background: #fff8e7;
@@ -356,6 +356,13 @@
     0%,100% { transform: translateX(-30px); }
     50%     { transform: translateX(30px); }
   }
+  @keyframes bounce-drive {
+    0%   { transform: translate(-30px, 0) rotate(-3deg); }
+    25%  { transform: translate(-15px, -22px) rotate(4deg); }
+    50%  { transform: translate(30px, 0) rotate(3deg); }
+    75%  { transform: translate(15px, -22px) rotate(-4deg); }
+    100% { transform: translate(-30px, 0) rotate(-3deg); }
+  }
   @keyframes wave {
     0%,100% { transform: translateY(0) rotate(-4deg); }
     50%     { transform: translateY(-8px) rotate(4deg); }
@@ -393,6 +400,7 @@
   .active.anim-shake    .core { animation: shake .15s linear infinite; transform-origin: 50% 50%; }
   .active.anim-glow     .core { animation: glow .9s ease-in-out infinite; }
   .active.anim-drive    .core { animation: drive 2s ease-in-out infinite; }
+  .active.anim-bouncedrive .core { animation: bounce-drive .9s ease-in-out infinite; transform-origin: 50% 100%; }
   .active.anim-wave     .core { animation: wave .7s ease-in-out infinite; transform-origin: 50% 100%; }
   .active.anim-stretch  .core { animation: stretch .5s ease-in-out infinite; transform-origin: 50% 100%; }
   .active.anim-roll     .core { animation: roll 2.4s ease-in-out infinite; transform-origin: 50% 50%; }
@@ -647,6 +655,22 @@ const PARTS = {
       <circle cx="72" cy="72" r="3" fill="#9ca3af"/>
     </svg>`
   },
+  bouncycar: {
+    name: "Bouncy car", anim: "anim-bouncedrive", voice: "vroom",
+    bouncy: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M10 70 L20 48 L40 36 L70 36 L90 58 L90 70 Z" fill="#ec4899" stroke="#2a2118" stroke-width="3"/>
+      <rect x="38" y="40" width="22" height="14" fill="#fbcfe8" stroke="#2a2118" stroke-width="2"/>
+      <path d="M22 32 L26 22 M50 28 L50 16 M78 32 L74 22" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="22" cy="22" r="3" fill="#fde047"/>
+      <circle cx="50" cy="14" r="3" fill="#fde047"/>
+      <circle cx="78" cy="22" r="3" fill="#fde047"/>
+      <circle cx="28" cy="74" r="11" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="72" cy="74" r="11" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="28" cy="74" r="5" fill="#fbbf24"/>
+      <circle cx="72" cy="74" r="5" fill="#fbbf24"/>
+    </svg>`
+  },
   rubber: {
     name: "Rubber band", anim: "anim-stretch", voice: "twang",
     svg: `<svg viewBox="0 0 100 100" class="core">
@@ -676,6 +700,29 @@ const PARTS = {
       <circle cx="40" cy="30" r="2" fill="#fde047" opacity="0.8"/>
       <circle cx="58" cy="31" r="1.8" fill="#fde047" opacity="0.7"/>
       <circle cx="50" cy="28" r="1.2" fill="#fff" opacity="0.7"/>
+    </svg>`
+  },
+  robot: {
+    name: "Robot", anim: "anim-rumble", voice: "beep",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <line x1="50" y1="18" x2="50" y2="6" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="50" cy="5" r="4" fill="#ef4444" stroke="#2a2118" stroke-width="2"/>
+      <rect x="28" y="16" width="44" height="30" rx="5" fill="#9ca3af" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="40" cy="30" r="5" fill="#fff" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="60" cy="30" r="5" fill="#fff" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="40" cy="30" r="2.2" fill="#06b6d4"/>
+      <circle cx="60" cy="30" r="2.2" fill="#06b6d4"/>
+      <rect x="40" y="38" width="20" height="3" fill="#2a2118"/>
+      <rect x="22" y="48" width="56" height="34" rx="4" fill="#6b7280" stroke="#2a2118" stroke-width="3"/>
+      <rect x="32" y="54" width="36" height="20" rx="2" fill="#374151" stroke="#2a2118" stroke-width="2"/>
+      <circle cx="40" cy="64" r="2" fill="#10b981"/>
+      <circle cx="50" cy="64" r="2" fill="#fbbf24"/>
+      <circle cx="60" cy="64" r="2" fill="#ef4444"/>
+      <rect x="12" y="52" width="9" height="22" rx="2" fill="#9ca3af" stroke="#2a2118" stroke-width="2"/>
+      <rect x="79" y="52" width="9" height="22" rx="2" fill="#9ca3af" stroke="#2a2118" stroke-width="2"/>
+      <path d="M14 74 L9 80 L18 80 Z" fill="#374151" stroke="#2a2118" stroke-width="2"/>
+      <path d="M86 74 L91 80 L82 80 Z" fill="#374151" stroke="#2a2118" stroke-width="2"/>
+      <rect x="22" y="82" width="56" height="10" rx="3" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
     </svg>`
   },
   volcano: {
@@ -750,7 +797,8 @@ const VOICES = {
   twang:  d => tone({ freq: 300, type:"triangle", dur:.4, vol:.15, slide: -100, delay: d }),
   plink:  d => tone({ freq: 1500, type:"sine", dur:.1, vol:.12, slide: -400, delay: d }),
   sizzle: d => { noise({ dur:.5, vol:.12, filter: 3500, delay: d }); tone({ freq: 220, type:"sawtooth", dur:.3, vol:.08, slide:-100, delay: d }); },
-  boom:   d => { noise({ dur:.5, vol:.18, filter: 180, delay: d }); tone({ freq: 90, type:"sawtooth", dur:.4, vol:.14, slide:-50, delay: d }); }
+  boom:   d => { noise({ dur:.5, vol:.18, filter: 180, delay: d }); tone({ freq: 90, type:"sawtooth", dur:.4, vol:.14, slide:-50, delay: d }); },
+  beep:   d => { tone({ freq: 880, type:"square", dur:.06, vol:.1, delay: d }); tone({ freq: 660, type:"square", dur:.06, vol:.1, delay: d+.1 }); tone({ freq: 990, type:"square", dur:.08, vol:.1, delay: d+.2 }); }
 };
 
 // ============================================================================
@@ -918,6 +966,7 @@ let lastFrame = 0;
 let marbles   = []; // { el, x, y, vx, vy, origX, origY }
 let fireballs = []; // { el, x, y, vx, vy, life }
 const volcanoNext = new Map(); // partId -> next-eruption timestamp
+const robotState = new Map(); // partId -> { phase, nextAt, targetEl, fromX, fromY, toX, toY, animStart, animDur }
 
 const PART_RADIUS   = 42;
 const MARBLE_RADIUS = 30;
@@ -929,6 +978,7 @@ function startPhysics() {
   marbles.length = 0;
   fireballs.length = 0;
   volcanoNext.clear();
+  robotState.clear();
 
   shop.querySelectorAll('.part[data-kind="marble"]').forEach(el => {
     const x = parseFloat(el.style.left), y = parseFloat(el.style.top);
@@ -940,9 +990,10 @@ function startPhysics() {
     });
   });
 
-  // Always run physics if a volcano is present (it spawns fireballs), or marbles.
+  // Always run physics if a volcano or robot is present, or marbles.
   const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
-  if (!marbles.length && !hasVolcano) return;
+  const hasRobot   = !!shop.querySelector('.part[data-kind="robot"]');
+  if (!marbles.length && !hasVolcano && !hasRobot) return;
 
   lastFrame = performance.now();
   physicsHandle = requestAnimationFrame(physicsLoop);
@@ -955,6 +1006,8 @@ function stopPhysics() {
   fireballs.forEach(f => f.el.remove());
   fireballs.length = 0;
   volcanoNext.clear();
+  robotState.clear();
+  shop.querySelectorAll('.part[data-grabbed]').forEach(el => delete el.dataset.grabbed);
 }
 
 function physicsLoop(now) {
@@ -985,6 +1038,86 @@ function physicsLoop(now) {
       volcanoNext.set(id, now + 2200 + Math.random() * 1800);
     }
   });
+
+  // --- Robots: randomly pick up a nearby part and place it somewhere else ---
+  const robots = obstacles.filter(o => o.kind === 'robot');
+  const activeRobotIds = new Set(robots.map(r => r.el.dataset.id));
+  robots.forEach(r => {
+    const id = r.el.dataset.id;
+    let s = robotState.get(id);
+    if (!s) {
+      s = { phase: 'idle', nextAt: now + 800 + Math.random() * 1400 };
+      robotState.set(id, s);
+    }
+
+    if (s.phase === 'idle') {
+      if (now < s.nextAt) return;
+      const candidates = obstacles.filter(o =>
+        o !== r &&
+        o.kind !== 'robot' &&
+        o.kind !== 'lava' &&
+        o.kind !== 'volcano' &&
+        !o.el.dataset.grabbed
+      );
+      if (!candidates.length) { s.nextAt = now + 700; return; }
+      const target = candidates[Math.floor(Math.random() * candidates.length)];
+      target.el.dataset.grabbed = id;
+      s.targetEl = target.el;
+      s.fromX = parseFloat(target.el.style.left) || 0;
+      s.fromY = parseFloat(target.el.style.top)  || 0;
+      s.toX = r.cx - 45;
+      s.toY = r.cy - 45 - 30; // hover above the robot
+      s.animStart = now;
+      s.animDur = 480;
+      s.phase = 'grabbing';
+      VOICES.beep(0);
+      hitPart(r.el, true);
+    } else if (s.phase === 'grabbing' || s.phase === 'placing') {
+      if (!s.targetEl || !s.targetEl.isConnected) {
+        s.phase = 'idle';
+        s.nextAt = now + 600;
+        s.targetEl = null;
+        return;
+      }
+      const t = Math.min(1, (now - s.animStart) / s.animDur);
+      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const x = s.fromX + (s.toX - s.fromX) * ease;
+      const y = s.fromY + (s.toY - s.fromY) * ease;
+      s.targetEl.style.left = x + 'px';
+      s.targetEl.style.top  = y + 'px';
+      // keep marble physics state in sync if a marble somehow got grabbed
+      const m = marbles.find(mm => mm.el === s.targetEl);
+      if (m) { m.x = x; m.y = y; m.vx = 0; m.vy = 0; }
+      if (t >= 1) {
+        if (s.phase === 'grabbing') {
+          let nx, ny, tries = 0;
+          do {
+            nx = Math.random() * Math.max(1, W - 90);
+            ny = Math.random() * Math.max(1, H - 90);
+            tries++;
+          } while (tries < 6 && Math.hypot(nx + 45 - r.cx, ny + 45 - r.cy) < 140);
+          s.fromX = s.toX; s.fromY = s.toY;
+          s.toX = nx; s.toY = ny;
+          s.animStart = now;
+          s.animDur = 620;
+          s.phase = 'placing';
+        } else {
+          delete s.targetEl.dataset.grabbed;
+          hitPart(s.targetEl, true);
+          s.targetEl = null;
+          s.phase = 'idle';
+          s.nextAt = now + 1400 + Math.random() * 2200;
+        }
+      }
+    }
+  });
+  // release any targets held by robots that no longer exist (e.g. destroyed by fire)
+  for (const [id, s] of robotState) {
+    if (!activeRobotIds.has(id)) {
+      if (s.targetEl) delete s.targetEl.dataset.grabbed;
+      robotState.delete(id);
+    }
+  }
 
   // --- Marbles ---
   const marblesToRemove = [];
