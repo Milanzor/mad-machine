@@ -1,14 +1,29 @@
 // Shared mutable state and constants.
 // Other modules read/write via the `S` object so changes are visible everywhere.
 
-// World fills the shop viewport — no panning/zooming.
-const _shopEl = document.getElementById("shop");
-export let WORLD_W = _shopEl.clientWidth  || 1024;
-export let WORLD_H = _shopEl.clientHeight || 600;
+// World fills the shop viewport — no panning.
+// We render the world at WORLD_SCALE so the logical canvas is larger than
+// the visible shop ("zoomed out" — more room for parts at the same screen size).
+export const WORLD_SCALE = 0.8;
+
+const _shopEl  = document.getElementById("shop");
+const _worldEl = document.getElementById("world");
+
+export let WORLD_W = Math.round((_shopEl.clientWidth  || 1024) / WORLD_SCALE);
+export let WORLD_H = Math.round((_shopEl.clientHeight || 600)  / WORLD_SCALE);
+
 export function refreshWorldSize() {
-  WORLD_W = _shopEl.clientWidth  || WORLD_W;
-  WORLD_H = _shopEl.clientHeight || WORLD_H;
+  const sw = _shopEl.clientWidth  || (WORLD_W * WORLD_SCALE);
+  const sh = _shopEl.clientHeight || (WORLD_H * WORLD_SCALE);
+  WORLD_W = Math.round(sw / WORLD_SCALE);
+  WORLD_H = Math.round(sh / WORLD_SCALE);
+  _worldEl.style.width  = WORLD_W + "px";
+  _worldEl.style.height = WORLD_H + "px";
+  _worldEl.style.transform = `scale(${WORLD_SCALE})`;
+  _worldEl.style.transformOrigin = "0 0";
 }
+refreshWorldSize();
+
 export const EMPOWER_MS = 15000;
 export const PART_RADIUS = 42;
 export const MARBLE_RADIUS = 30;
@@ -21,8 +36,8 @@ export const STORE_HISTORY = "machinegame:history";
 export const STORE_THEME   = "machinegame:theme";
 
 // DOM refs (resolved at module load — type="module" defers until after parse)
-export const shop        = document.getElementById("shop");
-export const world       = document.getElementById("world");
+export const shop        = _shopEl;
+export const world       = _worldEl;
 export const binGrid     = document.getElementById("binGrid");
 export const countEl     = document.getElementById("count");
 export const machineName = document.getElementById("machineName");
@@ -39,7 +54,7 @@ export const HIT_COOLDOWN = {};
 export const S = {
   worldX: 0,
   worldY: 0,
-  worldScale: 1,
+  worldScale: WORLD_SCALE,
   nextId: 1,
   dragging: null,
   dragOffset: { x: 0, y: 0 },
