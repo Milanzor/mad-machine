@@ -10,8 +10,10 @@ import { binGrid } from './state.js';
 //   erupts:     spawns fireballs while running
 //   mouse:      runs the mouse AI
 //   cheese:     empowers mice on touch
-//   hatches:    counts down to a hatch event
+//   hatches:    kind key this egg hatches into (e.g. "dino", "tRex")
 //   dino:       runs the dinosaur AI (eats everything)
+//   speed:      chase speed for dino AI (default 1.7)
+//   range:      bite range for dino AI (default 70)
 //   hidden:     skipped in the bin (spawned only via game logic)
 export const PARTS = {
   gear: {
@@ -242,7 +244,7 @@ export const PARTS = {
     </svg>`
   },
   dinoEgg: {
-    name: "Dino-ei", anim: "anim-wiggle", voice: "ping", hatches: true,
+    name: "Dino-ei", anim: "anim-wiggle", voice: "ping", hatches: "dino",
     svg: `<svg viewBox="0 0 100 100" class="core">
       <ellipse cx="50" cy="58" rx="32" ry="40" fill="#fde68a" stroke="#2a2118" stroke-width="3"/>
       <ellipse cx="40" cy="42" rx="10" ry="14" fill="#fef3c7" opacity=".8"/>
@@ -255,6 +257,7 @@ export const PARTS = {
   },
   dino: {
     name: "Dinosaurus", anim: "", voice: "boom", hidden: true, dino: true,
+    speed: 1.7, range: 70,
     svg: `<svg viewBox="0 0 100 100" class="core">
       <path d="M 92 70 L 76 52 L 70 64 Z" fill="#16a34a" stroke="#2a2118" stroke-width="2.5"/>
       <ellipse cx="56" cy="62" rx="26" ry="18" fill="#22c55e" stroke="#2a2118" stroke-width="3"/>
@@ -267,6 +270,37 @@ export const PARTS = {
       <rect x="44" y="74" width="7" height="14" rx="2" fill="#16a34a" stroke="#2a2118" stroke-width="2"/>
       <rect x="64" y="74" width="7" height="14" rx="2" fill="#16a34a" stroke="#2a2118" stroke-width="2"/>
       <ellipse cx="56" cy="68" rx="16" ry="6" fill="#86efac" opacity=".7"/>
+    </svg>`
+  },
+  tRexEgg: {
+    name: "T-rex-ei", anim: "anim-wiggle", voice: "ping", hatches: "tRex", danger: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <ellipse cx="50" cy="58" rx="32" ry="40" fill="#fca5a5" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="40" cy="42" rx="10" ry="14" fill="#fecaca" opacity=".8"/>
+      <path d="M 22 50 Q 32 44 36 54 Q 46 48 50 60 Q 56 48 64 54 Q 70 44 78 50" fill="none" stroke="#7f1d1d" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M 30 32 L 36 38 L 32 44 L 40 48" fill="none" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 64 30 L 60 40 L 68 44" fill="none" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="40" cy="70" r="3" fill="#7f1d1d"/>
+      <circle cx="58" cy="78" r="2.5" fill="#7f1d1d"/>
+      <circle cx="62" cy="64" r="2.5" fill="#7f1d1d"/>
+    </svg>`
+  },
+  tRex: {
+    name: "T-rex", anim: "", voice: "boom", hidden: true, dino: true,
+    speed: 2.5, range: 90,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 96 72 L 76 54 L 70 68 Z" fill="#991b1b" stroke="#2a2118" stroke-width="2.5"/>
+      <ellipse cx="58" cy="62" rx="28" ry="20" fill="#ef4444" stroke="#2a2118" stroke-width="3"/>
+      <path d="M 32 44 L 38 30 L 44 44 L 50 28 L 56 44 L 62 28 L 68 44 L 74 30 L 78 44" fill="#7f1d1d" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse cx="22" cy="48" rx="22" ry="17" fill="#ef4444" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="14" cy="44" rx="4.5" ry="4" fill="#fde047" stroke="#2a2118" stroke-width="1.5"/>
+      <ellipse cx="13" cy="44" rx="1.8" ry="2.8" fill="#2a2118"/>
+      <path d="M 2 56 L 32 54 L 28 64 L 4 62 Z" fill="#7f1d1d" stroke="#2a2118" stroke-width="2"/>
+      <path d="M 6 56 L 10 64 L 14 56 M 16 56 L 20 65 L 24 56 M 26 56 L 28 62 L 30 56" fill="#fff" stroke="#2a2118" stroke-width="1"/>
+      <path d="M 50 60 L 47 70 L 51 72" fill="none" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="42" y="76" width="10" height="16" rx="2" fill="#991b1b" stroke="#2a2118" stroke-width="2"/>
+      <rect x="66" y="76" width="10" height="16" rx="2" fill="#991b1b" stroke="#2a2118" stroke-width="2"/>
+      <ellipse cx="58" cy="68" rx="18" ry="6" fill="#fca5a5" opacity=".6"/>
     </svg>`
   },
   cheese: {

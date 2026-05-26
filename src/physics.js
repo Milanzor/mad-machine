@@ -34,8 +34,8 @@ export function startPhysics() {
   const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
   const hasRobot   = !!shop.querySelector('.part[data-kind="robot"]');
   const hasMouse   = !!shop.querySelector('.part[data-kind="mouse"]');
-  const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"]');
-  const hasDino    = !!shop.querySelector('.part[data-kind="dino"]');
+  const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"]');
+  const hasDino    = !!shop.querySelector('.part[data-kind="dino"], .part[data-kind="tRex"]');
   if (!S.marbles.length && !hasVolcano && !hasRobot && !hasMouse && !hasEgg && !hasDino) return;
 
   S.lastFrame = performance.now();
@@ -133,9 +133,10 @@ function physicsLoop(now) {
   });
 
   // --- Dino eggs: hatch on a timer ---
-  const eggEls = [...shop.querySelectorAll('.part[data-kind="dinoEgg"]')];
+  const eggEls = [...shop.querySelectorAll('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"]')];
   eggEls.forEach(el => {
     const id = el.dataset.id;
+    const def = PARTS[el.dataset.kind];
     let es = eggState.get(id);
     if (!es) {
       es = { hatchAt: now + 6000 + Math.random() * 10000 };
@@ -147,7 +148,10 @@ function physicsLoop(now) {
     if (now >= es.hatchAt) {
       const x = parseFloat(el.style.left) || 0;
       const y = parseFloat(el.style.top)  || 0;
-      particleBurst(x + 45, y + 45, ['#fde047','#fbbf24','#22c55e','#fff']);
+      const burstColors = def.hatches === 'tRex'
+        ? ['#fca5a5','#ef4444','#7f1d1d','#fff']
+        : ['#fde047','#fbbf24','#22c55e','#fff'];
+      particleBurst(x + 45, y + 45, burstColors);
       VOICES.boom(0);
       VOICES.squeak(0.12);
       el.animate(
@@ -156,15 +160,18 @@ function physicsLoop(now) {
         { duration: 320, easing: 'ease-out' }
       ).onfinish = () => el.remove();
       eggState.delete(id);
-      const dino = spawnPartLocal('dino', x, y, { silent: true });
+      const dino = spawnPartLocal(def.hatches, x, y, { silent: true });
       dino.classList.add('active');
     }
   });
 
   // --- Dinosaurs: stomp around and eat everything ---
-  const dinoEls = [...shop.querySelectorAll('.part[data-kind="dino"]')];
+  const dinoEls = [...shop.querySelectorAll('.part[data-kind="dino"], .part[data-kind="tRex"]')];
   dinoEls.forEach(el => {
     const id = el.dataset.id;
+    const def = PARTS[el.dataset.kind];
+    const speed = def.speed || 1.7;
+    const range = def.range || 70;
     let ds = dinoState.get(id);
     if (!ds) {
       ds = { vx: 0, vy: 0, dirTimer: 0 };
@@ -175,7 +182,7 @@ function physicsLoop(now) {
     const dcx = dx + 45, dcy = dy + 45;
 
     const prey = [...shop.querySelectorAll('.part')].filter(p =>
-      p !== el && p.dataset.kind !== 'dino' && p.isConnected
+      p !== el && p.isConnected && PARTS[p.dataset.kind] && !PARTS[p.dataset.kind].dino
     );
 
     let target = null;
@@ -192,9 +199,9 @@ function physicsLoop(now) {
     if (target) {
       const dirX = target.x - dcx, dirY = target.y - dcy;
       const len = Math.hypot(dirX, dirY) || 1;
-      ds.vx = (dirX / len) * 1.7;
-      ds.vy = (dirY / len) * 1.7;
-      if (target.d < 70) {
+      ds.vx = (dirX / len) * speed;
+      ds.vy = (dirY / len) * speed;
+      if (target.d < range) {
         particleBurst(target.x, target.y, ['#16a34a','#fbbf24','#dc2626','#fff','#86efac']);
         VOICES.boom(0);
         VOICES.munch(0.05);
@@ -214,8 +221,8 @@ function physicsLoop(now) {
       ds.dirTimer -= dt;
       if (ds.dirTimer <= 0) {
         const a = Math.random() * Math.PI * 2;
-        ds.vx = Math.cos(a) * 1.0;
-        ds.vy = Math.sin(a) * 1.0;
+        ds.vx = Math.cos(a) * speed * 0.6;
+        ds.vy = Math.sin(a) * speed * 0.6;
         ds.dirTimer = 50 + Math.random() * 80;
       }
     }

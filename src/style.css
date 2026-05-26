@@ -401,7 +401,14 @@ body.running .part[data-kind="marble"] { z-index: 50; }
   transform-origin: 50% 50%;
   filter: drop-shadow(0 4px 4px rgba(0,0,0,.3));
 }
-.part[data-kind="dinoEgg"].hatching .core {
+/* T-rex is even bigger and angrier */
+.part[data-kind="tRex"] .core {
+  transform: scale(1.9);
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 4px 6px rgba(127,29,29,.45));
+}
+.part[data-kind="dinoEgg"].hatching .core,
+.part[data-kind="tRexEgg"].hatching .core {
   animation: shake .12s linear infinite !important;
 }
 
