@@ -214,6 +214,18 @@ body.running .part[data-kind="marble"] { z-index: 50; }
   display: inline-grid; place-items: center;
 }
 .btn-undo { background: #14b8a6; }
+.btn-update {
+  background: #06b6d4;
+  font-size: 16px;
+  padding: 10px 16px;
+}
+.btn-update.available {
+  animation: update-pulse 1.4s ease-in-out infinite;
+}
+@keyframes update-pulse {
+  0%, 100% { box-shadow: 0 4px 0 #1a140d, 0 0 0 rgba(6,182,212,0); }
+  50%      { box-shadow: 0 4px 0 #1a140d, 0 0 18px rgba(6,182,212,.95); }
+}
 .count {
   color: #fbbf24; font-size: 13px; margin-right: auto;
   flex-shrink: 0;
@@ -221,7 +233,7 @@ body.running .part[data-kind="marble"] { z-index: 50; }
 @media (max-width: 700px) {
   .count { display: none; }
   .btn-run { font-size: 22px; padding: 12px 24px; }
-  .btn-clear, .btn-surprise { font-size: 14px; padding: 10px 14px; }
+  .btn-clear, .btn-surprise, .btn-update { font-size: 14px; padding: 10px 14px; }
 }
 
 /* History panel */

@@ -5,6 +5,7 @@ import { attachBinItemHandlers } from './spawn.js';
 import { loadInitial } from './persistence.js';
 import { THEMES, applyTheme, showMapSelect, initMapSelect } from './themes.js';
 import { initUI } from './ui.js';
+import { initUpdateCheck } from './update-check.js';
 
 // iOS: block double-tap-zoom only (pinch-zoom stays enabled).
 let lastTouchEnd = 0;
@@ -28,6 +29,7 @@ buildBinGrid();
 attachBinItemHandlers();
 initMapSelect();
 initUI();
+initUpdateCheck();
 
 // Theme: load saved or prompt for one.
 const saved = (() => { try { return localStorage.getItem(STORE_THEME); } catch (_) { return null; }})();
