@@ -2,28 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta id="viewport" name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<script>
-  // Auto-fit the design to small screens (iPad/phones) by giving the
-  // browser a fixed logical width so it scales the whole page down.
-  // On screens wider than the design, fall back to device-width so
-  // desktop layouts stay native. Pinch-zoom remains enabled.
-  (function () {
-    var designW = 1100;
-    var meta = document.getElementById('viewport');
-    function update() {
-      var w = Math.min(window.innerWidth || 9999, window.screen && window.screen.width || 9999);
-      if (w < designW) {
-        meta.setAttribute('content', 'width=' + designW + ',viewport-fit=cover');
-      } else {
-        meta.setAttribute('content', 'width=device-width,initial-scale=1,viewport-fit=cover');
-      }
-    }
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('orientationchange', update);
-  })();
-</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
 <title>Gekke Machine Werkplaats</title>
 <style>
   :root {
@@ -40,7 +19,7 @@
     -webkit-tap-highlight-color: transparent;
   }
   html, body {
-    margin: 0; height: 100vh; height: 100dvh; overflow: hidden;
+    margin: 0; height: 100%; overflow: hidden;
     font-family: "Comic Sans MS", "Chalkboard SE", system-ui, sans-serif;
     color: var(--ink);
     background: var(--paper);
@@ -56,10 +35,6 @@
       "header header"
       "bin    shop"
       "bin    controls";
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
   }
   @media (max-width: 700px) {
     body { grid-template-columns: 200px 1fr; }
