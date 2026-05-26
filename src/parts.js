@@ -289,47 +289,46 @@ export const PARTS = {
     name: "T-rex", anim: "", voice: "boom", hidden: true, dino: true,
     speed: 2.5, range: 90,
     svg: `<svg viewBox="0 0 100 100" class="core">
-      <!-- LONG curving tail -->
-      <path d="M 34 50 Q 14 50 4 66 Q -2 84 12 90 Q 24 88 32 72 L 42 60 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
-      <!-- bold yellow spikes along tail -->
-      <path d="M 6 84 L 11 75 L 16 84 L 21 73 L 26 82 L 31 72 L 35 80" fill="#fde68a" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
-      <!-- body (chubby pear) -->
-      <path d="M 28 32 Q 22 56 28 76 Q 36 82 44 80 Q 60 74 64 48 Q 66 28 50 26 Q 34 26 28 32 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
-      <!-- BIG yellow back spikes -->
-      <path d="M 62 30 L 70 22 L 70 38 L 78 30 L 74 46 L 80 40 L 70 56" fill="#fde68a" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
-      <!-- big cream belly -->
-      <path d="M 32 40 Q 28 60 32 76 Q 38 80 44 80 Q 54 76 54 40 Z" fill="#fef3c7" stroke="#2a2118" stroke-width="1.5" stroke-linejoin="round"/>
-      <!-- BACK LEG (tall and visible) -->
-      <path d="M 48 60 L 46 86 Q 48 96 56 96 L 66 96 Q 68 86 60 60 Z" fill="#dc2626" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
-      <!-- back foot -->
-      <path d="M 46 94 L 70 94 Q 72 99 68 100 L 48 100 Q 44 99 46 94 Z" fill="#dc2626" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M 50 100 L 50 96 M 56 100 L 56 96 M 62 100 L 62 96 M 68 100 L 68 96" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- FRONT LEG (tall and visible) -->
-      <path d="M 30 68 L 28 86 Q 30 96 38 96 L 46 96 Q 48 86 42 68 Z" fill="#ef4444" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
-      <!-- front foot -->
-      <path d="M 28 94 L 50 94 Q 52 99 48 100 L 30 100 Q 26 99 28 94 Z" fill="#ef4444" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
-      <path d="M 30 100 L 30 96 M 36 100 L 36 96 M 42 100 L 42 96 M 48 100 L 48 96" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- TINY ARM: small filled bent shape with claws (in front of belly) -->
-      <path d="M 44 54 Q 50 58 48 66 Q 46 70 42 70 Q 40 62 42 54 Z" fill="#ef4444" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
-      <!-- 3 claws at arm tip -->
-      <path d="M 41 70 L 40 74 M 44 71 L 44 75 M 47 70 L 48 74" stroke="#2a2118" stroke-width="2" stroke-linecap="round"/>
-      <!-- BIG round head -->
-      <path d="M 36 4 Q 60 -2 84 8 Q 94 22 88 34 Q 82 40 68 40 L 48 40 Q 36 32 30 20 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
-      <!-- lower jaw (open mouth) -->
-      <path d="M 48 40 Q 56 52 80 50 Q 90 44 88 34 L 68 34 Q 56 36 48 40 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
-      <!-- mouth interior -->
-      <path d="M 54 38 Q 62 46 80 44 Q 84 38 82 34 Q 64 30 54 38 Z" fill="#7f1d1d"/>
+      <!-- smooth S-curve tail -->
+      <path d="M 28 54 C 12 50 0 62 2 76 C 4 90 14 92 22 84 C 26 78 30 70 36 64 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <!-- bold tail spikes -->
+      <path d="M 6 80 L 10 73 L 14 81 L 18 73 L 22 80 L 26 73 L 30 78" fill="#fde68a" stroke="#2a2118" stroke-width="1.8" stroke-linejoin="round"/>
+      <!-- pear body -->
+      <path d="M 24 32 Q 18 56 24 72 Q 32 78 42 76 Q 56 68 60 46 Q 62 28 46 26 Q 30 26 24 32 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <!-- bold yellow back spikes (saw-tooth row) -->
+      <path d="M 56 30 L 64 20 L 62 36 L 70 28 L 66 44 L 72 36 L 60 54" fill="#fde68a" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <!-- cream belly -->
+      <path d="M 28 40 Q 22 58 28 72 Q 34 76 42 74 Q 50 66 50 40 Z" fill="#fef3c7" stroke="#2a2118" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- BACK LEG (visible from y=68) -->
+      <path d="M 44 68 L 42 88 Q 44 96 52 96 L 64 96 Q 66 88 58 68 Z" fill="#dc2626" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
+      <ellipse cx="54" cy="96" rx="12" ry="3" fill="#dc2626" stroke="#2a2118" stroke-width="2"/>
+      <path d="M 46 100 L 44 96 M 54 100 L 54 96 M 62 100 L 64 96" stroke="#2a2118" stroke-width="2" stroke-linecap="round"/>
+      <!-- FRONT LEG (visible from y=64) -->
+      <path d="M 26 64 L 24 88 Q 26 96 34 96 L 44 96 Q 46 88 40 64 Z" fill="#ef4444" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
+      <ellipse cx="34" cy="96" rx="12" ry="3" fill="#ef4444" stroke="#2a2118" stroke-width="2"/>
+      <path d="M 26 100 L 24 96 M 34 100 L 34 96 M 42 100 L 44 96" stroke="#2a2118" stroke-width="2" stroke-linecap="round"/>
+      <!-- TINY arm held up at chest -->
+      <path d="M 38 48 Q 46 48 46 56 Q 44 62 38 60 Z" fill="#ef4444" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <!-- 3 finger claws -->
+      <path d="M 40 60 L 38 64 M 43 62 L 43 66 M 46 60 L 48 64" stroke="#2a2118" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- HEAD upper -->
+      <path d="M 28 26 Q 32 6 54 4 Q 78 4 90 18 Q 96 28 86 32 L 48 34 Q 28 34 28 26 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <!-- LOWER JAW -->
+      <path d="M 48 34 L 86 32 Q 90 42 76 46 Q 58 48 50 42 Q 46 38 48 34 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <!-- dark mouth -->
+      <path d="M 52 34 Q 60 42 80 40 Q 84 36 82 32 Q 68 30 52 34 Z" fill="#7f1d1d"/>
       <!-- tongue -->
-      <ellipse cx="68" cy="42" rx="6" ry="2.5" fill="#fb7185" stroke="#2a2118" stroke-width="1"/>
-      <!-- big teeth -->
-      <path d="M 56 34 L 60 44 L 64 34 M 68 33 L 72 45 L 76 33 M 80 34 L 84 42 L 86 34" fill="#fff" stroke="#2a2118" stroke-width="1.2"/>
-      <path d="M 58 45 L 60 38 L 62 45 M 70 47 L 72 40 L 74 47" fill="#fff" stroke="#2a2118" stroke-width="1.2"/>
+      <ellipse cx="66" cy="38" rx="6" ry="2.5" fill="#fb7185" stroke="#2a2118" stroke-width="1"/>
+      <!-- 4 big upper teeth -->
+      <path d="M 54 33 L 56 41 L 58 33 M 62 32 L 64 42 L 66 32 M 70 32 L 72 42 L 74 32 M 78 33 L 80 40 L 82 33" fill="#fff" stroke="#2a2118" stroke-width="1.2"/>
+      <!-- lower teeth -->
+      <path d="M 56 42 L 58 36 L 60 42 M 66 43 L 68 38 L 70 43 M 74 42 L 76 37 L 78 42" fill="#fff" stroke="#2a2118" stroke-width="1.2"/>
       <!-- BIG happy eye -->
-      <ellipse cx="58" cy="20" rx="8" ry="7.5" fill="#fff" stroke="#2a2118" stroke-width="2"/>
-      <ellipse cx="56" cy="21" rx="3.5" ry="4" fill="#2a2118"/>
-      <circle cx="55" cy="19" r="1.5" fill="#fff"/>
+      <ellipse cx="56" cy="16" rx="7" ry="7" fill="#fff" stroke="#2a2118" stroke-width="2"/>
+      <ellipse cx="54" cy="17" rx="3" ry="3.5" fill="#2a2118"/>
+      <circle cx="53" cy="15" r="1.5" fill="#fff"/>
       <!-- nostril -->
-      <ellipse cx="78" cy="24" rx="1.5" ry="1" fill="#2a2118"/>
+      <ellipse cx="78" cy="22" rx="1.5" ry="1" fill="#2a2118"/>
     </svg>`
   },
   cheese: {
