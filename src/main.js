@@ -8,6 +8,15 @@ import { loadInitial } from './persistence.js';
 import { THEMES, applyTheme, showMapSelect, initMapSelect } from './themes.js';
 import { initUI } from './ui.js';
 
+// iOS: block double-tap-zoom only (pinch-zoom stays enabled).
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 350) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+document.addEventListener('dblclick', (e) => e.preventDefault());
+
 // Build the bin and wire up handlers.
 buildBinGrid();
 attachBinItemHandlers();
