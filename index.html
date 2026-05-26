@@ -2,7 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta id="viewport" name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<script>
+  // Auto-fit the design to small screens (iPad/phones) by giving the
+  // browser a fixed logical width so it scales the whole page down.
+  // On screens wider than the design, fall back to device-width so
+  // desktop layouts stay native. Pinch-zoom remains enabled.
+  (function () {
+    var designW = 1100;
+    var meta = document.getElementById('viewport');
+    function update() {
+      var w = Math.min(window.innerWidth || 9999, window.screen && window.screen.width || 9999);
+      if (w < designW) {
+        meta.setAttribute('content', 'width=' + designW + ',viewport-fit=cover');
+      } else {
+        meta.setAttribute('content', 'width=device-width,initial-scale=1,viewport-fit=cover');
+      }
+    }
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+  })();
+</script>
 <title>Gekke Machine Werkplaats</title>
 <style>
   :root {

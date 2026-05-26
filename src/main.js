@@ -8,18 +8,6 @@ import { loadInitial } from './persistence.js';
 import { THEMES, applyTheme, showMapSelect, initMapSelect } from './themes.js';
 import { initUI } from './ui.js';
 
-// iOS: block pinch-zoom and double-tap-zoom (viewport meta is ignored by Safari).
-document.addEventListener('gesturestart', (e) => e.preventDefault());
-document.addEventListener('gesturechange', (e) => e.preventDefault());
-document.addEventListener('gestureend', (e) => e.preventDefault());
-let lastTouchEnd = 0;
-document.addEventListener('touchend', (e) => {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 350) e.preventDefault();
-  lastTouchEnd = now;
-}, { passive: false });
-document.addEventListener('dblclick', (e) => e.preventDefault());
-
 // Build the bin and wire up handlers.
 buildBinGrid();
 attachBinItemHandlers();
