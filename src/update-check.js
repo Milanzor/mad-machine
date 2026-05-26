@@ -39,7 +39,6 @@ export function initUpdateCheck() {
   async function check() {
     const sig = await remoteSig();
     if (sig && sig !== localSig) {
-      btn.hidden = false;
       btn.classList.add('available');
     }
   }
