@@ -140,59 +140,15 @@
     overflow: hidden;
     background: #0006;
     touch-action: none;
-    cursor: grab;
   }
-  .shop.panning { cursor: grabbing; }
-  .shop-controls {
-    position: absolute;
-    right: 10px; bottom: 10px;
-    display: flex; align-items: end; gap: 8px;
-    z-index: 60;
-    pointer-events: none;
-  }
-  .pan-pad {
-    display: grid;
-    grid-template-columns: repeat(3, 38px);
-    grid-template-rows: repeat(3, 38px);
-    gap: 4px;
-    pointer-events: none;
-  }
-  .pan-pad #panUp     { grid-column: 2; grid-row: 1; }
-  .pan-pad #panLeft   { grid-column: 1; grid-row: 2; }
-  .pan-pad #panCenter { grid-column: 2; grid-row: 2; }
-  .pan-pad #panRight  { grid-column: 3; grid-row: 2; }
-  .pan-pad #panDown   { grid-column: 2; grid-row: 3; }
-  .zoom-pad {
-    display: flex; flex-direction: column; gap: 4px;
-    pointer-events: none;
-  }
-  .shop-btn {
-    pointer-events: auto;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: rgba(42,33,24,.85);
-    color: #fff8e7;
-    border: 2px solid #1a140d;
-    box-shadow: 0 3px 0 rgba(0,0,0,.4);
-    font-size: 16px; font-weight: bold;
-    cursor: pointer;
-    display: grid; place-items: center;
-    line-height: 1; padding: 0;
-    touch-action: manipulation;
-  }
-  .shop-btn:hover { background: #5b4a33; }
-  .shop-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.4); }
   .world {
     position: absolute;
-    top: 0; left: 0;
-    width: 3000px; height: 2000px;
+    inset: 0;
     background-color: var(--world-bg, var(--paper));
     background-image: var(--world-pattern,
       linear-gradient(rgba(120,90,40,.07) 1px, transparent 1px),
       linear-gradient(90deg, rgba(120,90,40,.07) 1px, transparent 1px));
     background-size: var(--world-pattern-size, 24px 24px);
-    transform-origin: 0 0;
-    will-change: transform;
   }
   .shop .hint {
     position: absolute; inset: 0;
@@ -602,19 +558,6 @@
 
 <section class="shop" id="shop">
   <div class="world" id="world"></div>
-  <div class="shop-controls" id="shopControls">
-    <div class="pan-pad">
-      <button class="shop-btn" id="panUp" aria-label="Omhoog">▲</button>
-      <button class="shop-btn" id="panLeft" aria-label="Links">◄</button>
-      <button class="shop-btn" id="panCenter" aria-label="Midden">⊙</button>
-      <button class="shop-btn" id="panRight" aria-label="Rechts">►</button>
-      <button class="shop-btn" id="panDown" aria-label="Omlaag">▼</button>
-    </div>
-    <div class="zoom-pad">
-      <button class="shop-btn" id="zoomIn" aria-label="Inzoomen">＋</button>
-      <button class="shop-btn" id="zoomOut" aria-label="Uitzoomen">－</button>
-    </div>
-  </div>
 </section>
 
 <footer class="controls">

@@ -1,8 +1,14 @@
 // Shared mutable state and constants.
 // Other modules read/write via the `S` object so changes are visible everywhere.
 
-export const WORLD_W = 3000;
-export const WORLD_H = 2000;
+// World fills the shop viewport — no panning/zooming.
+const _shopEl = document.getElementById("shop");
+export let WORLD_W = _shopEl.clientWidth  || 1024;
+export let WORLD_H = _shopEl.clientHeight || 600;
+export function refreshWorldSize() {
+  WORLD_W = _shopEl.clientWidth  || WORLD_W;
+  WORLD_H = _shopEl.clientHeight || WORLD_H;
+}
 export const EMPOWER_MS = 15000;
 export const PART_RADIUS = 42;
 export const MARBLE_RADIUS = 30;
@@ -33,7 +39,7 @@ export const HIT_COOLDOWN = {};
 export const S = {
   worldX: 0,
   worldY: 0,
-  worldScale: 0.7,
+  worldScale: 1,
   nextId: 1,
   dragging: null,
   dragOffset: { x: 0, y: 0 },

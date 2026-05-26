@@ -1,5 +1,5 @@
 // Run/stop, control buttons, modals, name generator, save/load modal.
-import { S, shop, world, WORLD_W, WORLD_H, machineName } from './state.js';
+import { S, shop, world, machineName } from './state.js';
 import { PARTS } from './parts.js';
 import { VOICES, ac, tone } from './audio.js';
 import { startPhysics, stopPhysics } from './physics.js';
@@ -7,7 +7,6 @@ import {
   saveAndPush, undo, exportBuild, importBuild, snapshot
 } from './persistence.js';
 import { spawnPartLocal, spawnInShopRandom, updateCount } from './spawn.js';
-import { panBy, zoomBy, clampWorld, setWorldTransform } from './world.js';
 
 const ADJ  = ["Machtige","Wiebelende","Geschifte","Mega","Turbo","Stiekeme","Krokante","Drassige","Galactische","Kosmische","Stinkende","Wilde","Pluizige","Quantum","Atomische","Vulkanische","Smeltende"];
 const NOUN = ["Dingetje","Apparaatje","Vehikel","Gadget","Constructie","Machine","Wiebelaar","Draaier","Vermorzelaar","Toeteraar","Toeter","O-Matic","Motor","Uitbarster"];
@@ -146,21 +145,6 @@ export function initUI() {
   });
 
   document.getElementById("undoBtn").addEventListener("click", undo);
-
-  // Pan / zoom buttons
-  const PAN_STEP = 140;
-  document.getElementById("panUp")    .addEventListener("click", () => panBy(0,  PAN_STEP));
-  document.getElementById("panDown")  .addEventListener("click", () => panBy(0, -PAN_STEP));
-  document.getElementById("panLeft")  .addEventListener("click", () => panBy( PAN_STEP, 0));
-  document.getElementById("panRight") .addEventListener("click", () => panBy(-PAN_STEP, 0));
-  document.getElementById("panCenter").addEventListener("click", () => {
-    const sr = shop.getBoundingClientRect();
-    S.worldX = Math.min(0, (sr.width  - WORLD_W * S.worldScale) / 2);
-    S.worldY = Math.min(0, (sr.height - WORLD_H * S.worldScale) / 2);
-    clampWorld(); setWorldTransform();
-  });
-  document.getElementById("zoomIn") .addEventListener("click", () => zoomBy(1.2));
-  document.getElementById("zoomOut").addEventListener("click", () => zoomBy(1 / 1.2));
 
   // Bin arrows
   const binScroll = document.getElementById("binScroll");
