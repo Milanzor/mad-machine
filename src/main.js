@@ -1,4 +1,5 @@
 // Entry point — wires up everything once the DOM is ready.
+import '@fontsource-variable/fredoka/wght.css';
 import { S, shop, STORE_THEME, refreshWorldSize } from './state.js';
 import { buildBinGrid } from './parts.js';
 import { attachBinItemHandlers } from './spawn.js';
