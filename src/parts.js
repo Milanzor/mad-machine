@@ -289,18 +289,42 @@ export const PARTS = {
     name: "T-rex", anim: "", voice: "boom", hidden: true, dino: true,
     speed: 2.5, range: 90,
     svg: `<svg viewBox="0 0 100 100" class="core">
-      <path d="M 96 72 L 76 54 L 70 68 Z" fill="#991b1b" stroke="#2a2118" stroke-width="2.5"/>
-      <ellipse cx="58" cy="62" rx="28" ry="20" fill="#ef4444" stroke="#2a2118" stroke-width="3"/>
-      <path d="M 32 44 L 38 30 L 44 44 L 50 28 L 56 44 L 62 28 L 68 44 L 74 30 L 78 44" fill="#7f1d1d" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
-      <ellipse cx="22" cy="48" rx="22" ry="17" fill="#ef4444" stroke="#2a2118" stroke-width="3"/>
-      <ellipse cx="14" cy="44" rx="4.5" ry="4" fill="#fde047" stroke="#2a2118" stroke-width="1.5"/>
-      <ellipse cx="13" cy="44" rx="1.8" ry="2.8" fill="#2a2118"/>
-      <path d="M 2 56 L 32 54 L 28 64 L 4 62 Z" fill="#7f1d1d" stroke="#2a2118" stroke-width="2"/>
-      <path d="M 6 56 L 10 64 L 14 56 M 16 56 L 20 65 L 24 56 M 26 56 L 28 62 L 30 56" fill="#fff" stroke="#2a2118" stroke-width="1"/>
-      <path d="M 50 60 L 47 70 L 51 72" fill="none" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
-      <rect x="42" y="76" width="10" height="16" rx="2" fill="#991b1b" stroke="#2a2118" stroke-width="2"/>
-      <rect x="66" y="76" width="10" height="16" rx="2" fill="#991b1b" stroke="#2a2118" stroke-width="2"/>
-      <ellipse cx="58" cy="68" rx="18" ry="6" fill="#fca5a5" opacity=".6"/>
+      <!-- thick muscular tail counterbalancing back-right -->
+      <path d="M 60 50 Q 78 40 94 28 L 98 40 Q 84 56 64 66 Z" fill="#dc2626" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- body torso -->
+      <ellipse cx="50" cy="58" rx="20" ry="14" fill="#ef4444" stroke="#2a2118" stroke-width="3"/>
+      <!-- back ridge spikes -->
+      <path d="M 32 50 L 36 38 L 42 50 L 48 36 L 54 50 L 60 38 L 64 50" fill="#7f1d1d" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <!-- powerful legs -->
+      <path d="M 38 64 L 36 86 Q 36 92 42 92 L 50 92 Q 52 86 48 64 Z" fill="#b91c1c" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M 56 62 L 56 86 Q 56 92 62 92 L 72 92 Q 74 86 68 60 Z" fill="#991b1b" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- clawed feet -->
+      <ellipse cx="46" cy="92" rx="7" ry="2.5" fill="#7f1d1d" stroke="#2a2118" stroke-width="2"/>
+      <path d="M 40 94 L 39 97 M 44 94 L 44 97 M 48 94 L 48 97 M 52 94 L 53 97" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
+      <ellipse cx="66" cy="92" rx="8" ry="2.5" fill="#7f1d1d" stroke="#2a2118" stroke-width="2"/>
+      <path d="M 59 94 L 58 97 M 63 94 L 63 97 M 67 94 L 67 97 M 71 94 L 72 97" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- HUGE head (defining T-rex feature) -->
+      <path d="M 4 32 Q 2 18 16 16 L 36 22 Q 44 34 38 46 L 18 48 Q 0 46 4 32 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <!-- head crest spikes -->
+      <path d="M 16 16 L 20 8 L 24 16 L 30 8 L 34 20" fill="#7f1d1d" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <!-- open jaw: dark mouth cavity -->
+      <path d="M 4 38 L 38 38 L 34 52 L 8 50 Z" fill="#450a0a" stroke="#2a2118" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- big upper teeth (pointing down) -->
+      <path d="M 8 38 L 10 46 L 12 38 M 14 38 L 16 47 L 18 38 M 22 38 L 24 48 L 26 38 M 30 38 L 32 46 L 34 38" fill="#fff" stroke="#2a2118" stroke-width="1"/>
+      <!-- big lower teeth (pointing up) -->
+      <path d="M 10 51 L 12 44 L 14 51 M 18 51 L 20 44 L 22 51 M 26 50 L 28 44 L 30 50" fill="#fff" stroke="#2a2118" stroke-width="1"/>
+      <!-- angry yellow eye -->
+      <ellipse cx="22" cy="26" rx="5" ry="4.5" fill="#fde047" stroke="#2a2118" stroke-width="1.5"/>
+      <ellipse cx="20" cy="26" rx="2.2" ry="3.2" fill="#2a2118"/>
+      <!-- menacing brow ridge -->
+      <path d="M 14 19 Q 22 16 30 21" fill="none" stroke="#7f1d1d" stroke-width="3" stroke-linecap="round"/>
+      <!-- nostril -->
+      <circle cx="10" cy="32" r="1.5" fill="#2a2118"/>
+      <!-- belly highlight -->
+      <ellipse cx="50" cy="64" rx="12" ry="3.5" fill="#fca5a5" opacity=".45"/>
+      <!-- TINY T-rex arms (the iconic feature!) -->
+      <path d="M 42 54 Q 45 58 43 62" fill="none" stroke="#991b1b" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 42 62 L 41 64 M 44 62 L 44 64" stroke="#2a2118" stroke-width="1.5" stroke-linecap="round"/>
     </svg>`
   },
   cheese: {
