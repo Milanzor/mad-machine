@@ -343,6 +343,26 @@ export const PARTS = {
       <ellipse cx="78" cy="22" rx="1.5" ry="1" fill="#2a2118"/>
     </svg>`
   },
+  cucumber: {
+    name: "Komkommer", anim: "anim-shake-tiny", voice: "plink", cheese: true,
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <g transform="rotate(-22 50 50)">
+        <ellipse cx="50" cy="50" rx="40" ry="14" fill="#15803d" stroke="#2a2118" stroke-width="3"/>
+        <ellipse cx="50" cy="50" rx="36" ry="10" fill="#22c55e"/>
+        <path d="M 22 50 Q 50 38 78 50" fill="none" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M 22 50 Q 50 62 78 50" fill="none" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="30" cy="46" r="1.6" fill="#14532d"/>
+        <circle cx="42" cy="44" r="1.4" fill="#14532d"/>
+        <circle cx="54" cy="46" r="1.6" fill="#14532d"/>
+        <circle cx="66" cy="44" r="1.4" fill="#14532d"/>
+        <circle cx="36" cy="54" r="1.4" fill="#14532d"/>
+        <circle cx="48" cy="56" r="1.6" fill="#14532d"/>
+        <circle cx="60" cy="54" r="1.4" fill="#14532d"/>
+        <circle cx="72" cy="55" r="1.4" fill="#14532d"/>
+        <ellipse cx="34" cy="46" rx="14" ry="4" fill="#86efac" opacity=".5"/>
+      </g>
+    </svg>`
+  },
   cheese: {
     name: "Kaas", anim: "anim-glow", voice: "ping", cheese: true,
     svg: `<svg viewBox="0 0 100 100" class="core">

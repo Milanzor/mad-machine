@@ -245,7 +245,7 @@ function physicsLoop(now) {
 
   // --- Mice ---
   const mouseEls  = [...shop.querySelectorAll('.part[data-kind="mouse"]')];
-  const cheeseEls = [...shop.querySelectorAll('.part[data-kind="cheese"]')];
+  const cheeseEls = [...shop.querySelectorAll('.part[data-kind="cheese"], .part[data-kind="cucumber"]')];
   const robotEls  = [...shop.querySelectorAll('.part[data-kind="robot"]')];
 
   const liveMice = [];
@@ -342,7 +342,10 @@ function physicsLoop(now) {
         el.classList.add('empowered');
         VOICES.munch(0);
         VOICES.squeak(0.18);
-        particleBurst(cx, cy, ['#fbbf24','#fde047','#a16207','#fff']);
+        const eatColors = ch.dataset.kind === 'cucumber'
+          ? ['#22c55e','#86efac','#15803d','#fff']
+          : ['#fbbf24','#fde047','#a16207','#fff'];
+        particleBurst(cx, cy, eatColors);
         ch.animate(
           [{ transform: 'scale(1) rotate(0)', opacity: 1 },
            { transform: 'scale(0.2) rotate(220deg)', opacity: 0 }],

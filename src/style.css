@@ -452,6 +452,12 @@ body.running .part[data-kind="marble"] { z-index: 50; }
   60% { transform: translate(-2px,-2px) rotate(-1deg); }
   80% { transform: translate(2px,1px) rotate(2deg); }
 }
+@keyframes shake-tiny {
+  0%,100% { transform: translate(0,0) rotate(0); }
+  25% { transform: translate(-1px,0) rotate(-1deg); }
+  50% { transform: translate(1px,-1px) rotate(0deg); }
+  75% { transform: translate(0,1px) rotate(1deg); }
+}
 @keyframes glow {
   0%,100% { filter: drop-shadow(0 0 0 #fff) brightness(1); }
   50%     { filter: drop-shadow(0 0 18px #fde047) brightness(1.4); }
@@ -502,6 +508,7 @@ body.running .part[data-kind="marble"] { z-index: 50; }
 .active.anim-wiggle   .core { animation: wiggle .4s ease-in-out infinite; transform-origin: 50% 50%; }
 .active.anim-flip     .core { animation: flip 1s ease-in-out infinite; transform-origin: 50% 70%; }
 .active.anim-shake    .core { animation: shake .15s linear infinite; transform-origin: 50% 50%; }
+.active.anim-shake-tiny .core { animation: shake-tiny .35s ease-in-out infinite; transform-origin: 50% 50%; }
 .active.anim-glow     .core { animation: glow .9s ease-in-out infinite; }
 .active.anim-drive    .core { animation: drive 2s ease-in-out infinite; }
 .active.anim-bouncedrive .core { animation: bounce-drive .9s ease-in-out infinite; transform-origin: 50% 100%; }
