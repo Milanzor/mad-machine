@@ -408,7 +408,8 @@ body.running .part[data-kind="marble"] { z-index: 50; }
   filter: drop-shadow(0 4px 6px rgba(127,29,29,.45));
 }
 .part[data-kind="dinoEgg"].hatching .core,
-.part[data-kind="tRexEgg"].hatching .core {
+.part[data-kind="tRexEgg"].hatching .core,
+.part[data-kind="mouseEgg"].hatching .core {
   animation: shake .12s linear infinite !important;
 }
 

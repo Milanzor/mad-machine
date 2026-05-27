@@ -34,7 +34,7 @@ export function startPhysics() {
   const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
   const hasRobot   = !!shop.querySelector('.part[data-kind="robot"]');
   const hasMouse   = !!shop.querySelector('.part[data-kind="mouse"]');
-  const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"]');
+  const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"], .part[data-kind="mouseEgg"]');
   const hasDino    = !!shop.querySelector('.part[data-kind="dino"], .part[data-kind="tRex"]');
   if (!S.marbles.length && !hasVolcano && !hasRobot && !hasMouse && !hasEgg && !hasDino) return;
 
@@ -133,7 +133,7 @@ function physicsLoop(now) {
   });
 
   // --- Dino eggs: hatch on a timer ---
-  const eggEls = [...shop.querySelectorAll('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"]')];
+  const eggEls = [...shop.querySelectorAll('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"], .part[data-kind="mouseEgg"]')];
   eggEls.forEach(el => {
     const id = el.dataset.id;
     const def = PARTS[el.dataset.kind];
@@ -150,6 +150,8 @@ function physicsLoop(now) {
       const y = parseFloat(el.style.top)  || 0;
       const burstColors = def.hatches === 'tRex'
         ? ['#fca5a5','#ef4444','#7f1d1d','#fff']
+        : def.hatches === 'mouse'
+        ? ['#e5e7eb','#9ca3af','#fbcfe8','#fff']
         : ['#fde047','#fbbf24','#22c55e','#fff'];
       particleBurst(x + 45, y + 45, burstColors);
       VOICES.boom(0);

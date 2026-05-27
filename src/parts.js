@@ -224,6 +224,18 @@ export const PARTS = {
       <rect x="22" y="82" width="56" height="10" rx="3" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
     </svg>`
   },
+  mouseEgg: {
+    name: "Muis-ei", anim: "anim-wiggle", voice: "ping", hatches: "mouse",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <ellipse cx="50" cy="58" rx="32" ry="40" fill="#e5e7eb" stroke="#2a2118" stroke-width="3"/>
+      <ellipse cx="40" cy="42" rx="10" ry="14" fill="#f3f4f6" opacity=".8"/>
+      <path d="M 22 50 Q 32 44 36 54 Q 46 48 50 60 Q 56 48 64 54 Q 70 44 78 50" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="40" cy="70" r="3" fill="#fbcfe8"/>
+      <circle cx="58" cy="78" r="2.5" fill="#fbcfe8"/>
+      <circle cx="38" cy="82" r="2" fill="#fb7185"/>
+      <circle cx="62" cy="64" r="2.5" fill="#fbcfe8"/>
+    </svg>`
+  },
   mouse: {
     name: "Muis", anim: "", voice: "squeak", mouse: true,
     svg: `<svg viewBox="0 0 100 100" class="core">
