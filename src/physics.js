@@ -677,5 +677,55 @@ function physicsLoop(now) {
   S.fireballs = S.fireballs.filter(f => !fireballsToRemove.includes(f));
   S.marbles = S.marbles.filter(m => !m._dead);
 
+  // --- Tornado: catch nearby things in the funnel and whirl them around ---
+  if (S.weather === 'tornado') {
+    const funnel = world.querySelector('.wx-tornado');
+    if (funnel) {
+      const fr = funnel.getBoundingClientRect();
+      const wr = world.getBoundingClientRect();
+      const fx  = (fr.left - wr.left) / S.worldScale + (fr.width  / S.worldScale) / 2;
+      const fyc = (fr.top  - wr.top)  / S.worldScale + (fr.height / S.worldScale) * 0.5;
+      const R = 340;
+
+      // Marbles swirl via acceleration (they already integrate velocity + gravity).
+      S.marbles.forEach(m => {
+        const dx = (m.x + 45) - fx, dy = (m.y + 45) - fyc;
+        const d = Math.hypot(dx, dy);
+        if (d > R || d < 1) return;
+        const t = 1 - d / R;
+        const nx = dx / d, ny = dy / d;                  // outward unit
+        m.vx += (-ny * 0.7 - nx * 0.28) * t * dt;        // tangential + inward
+        m.vy += ( nx * 0.7 - ny * 0.28) * t * dt - 0.45 * t * dt; // + lift
+      });
+
+      // Parts, critters and eggs orbit the funnel: rotate their position around
+      // the funnel axis with a slight inward spiral and upward drift.
+      [...shop.querySelectorAll('.part:not([data-kind="marble"])')].forEach(el => {
+        if (el.dataset.grabbed) return;
+        const x = parseFloat(el.style.left) || 0;
+        const y = parseFloat(el.style.top)  || 0;
+        const dx = (x + 45) - fx, dy = (y + 45) - fyc;
+        const d = Math.hypot(dx, dy);
+        if (d > R || d < 1) return;
+        const t = 1 - d / R;
+        const ang = 0.06 * t * dt;
+        const cos = Math.cos(ang), sin = Math.sin(ang);
+        const k = 1 - 0.012 * t;                         // spiral inward
+        let nxp = fx  + (dx * cos - dy * sin) * k - 45;
+        let nyp = fyc + (dx * sin + dy * cos) * k - 45 - 0.8 * t * dt; // lift
+        nxp = Math.max(0, Math.min(W - 90, nxp));
+        nyp = Math.max(0, Math.min(H - 90, nyp));
+        el.style.left = nxp + 'px';
+        el.style.top  = nyp + 'px';
+        if (t > 0.75) hitPart(el);                       // rattle (cooldown-limited)
+      });
+
+      if (now > (S.weatherSoundAt || 0)) {
+        VOICES.windy(0);
+        S.weatherSoundAt = now + 3200;
+      }
+    }
+  }
+
   S.physicsHandle = requestAnimationFrame(physicsLoop);
 }

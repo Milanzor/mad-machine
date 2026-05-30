@@ -72,5 +72,6 @@ export const S = {
   weatherGravity: 1,
   weatherWind: 0,
   weatherDrag: 1,
-  weatherTimer: null
+  weatherTimer: null,
+  weatherSoundAt: 0
 };
