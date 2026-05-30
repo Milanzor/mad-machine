@@ -44,7 +44,8 @@ export function startPhysics() {
   const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"], .part[data-kind="mouseEgg"]');
   const hasDino    = !!shop.querySelector('.part[data-kind="dino"], .part[data-kind="tRex"]');
   const inSpace    = document.body.dataset.theme === 'space';
-  if (!S.marbles.length && !hasVolcano && !hasRobot && !hasRocket && !hasMouse && !hasEgg && !hasDino && !inSpace) return;
+  const sunnyBurn  = S.weather === 'sunny';
+  if (!S.marbles.length && !hasVolcano && !hasRobot && !hasRocket && !hasMouse && !hasEgg && !hasDino && !inSpace && !sunnyBurn) return;
 
   S.lastFrame = performance.now();
   S.physicsHandle = requestAnimationFrame(physicsLoop);
@@ -952,6 +953,37 @@ function physicsLoop(now) {
   meteorsToRemove.forEach(mt => mt.el.remove());
   S.meteors = S.meteors.filter(mt => !meteorsToRemove.includes(mt));
   S.marbles = S.marbles.filter(m => !m._dead);
+
+  // --- Sun: incinerate anything that drifts too close (sunny weather) ---
+  if (S.weather === 'sunny') {
+    const sunEl = world.querySelector('.wx-sun');
+    if (sunEl) {
+      const sr = sunEl.getBoundingClientRect();
+      const wr = world.getBoundingClientRect();
+      const scx = (sr.left - wr.left) / S.worldScale + (sr.width  / S.worldScale) / 2;
+      const scy = (sr.top  - wr.top)  / S.worldScale + (sr.height / S.worldScale) / 2;
+      const burnR = (sr.width / S.worldScale) / 2 + 52;
+
+      S.marbles.forEach(m => {
+        if (m._dead) return;
+        if (Math.hypot((m.x + 45) - scx, (m.y + 45) - scy) < burnR) {
+          explodeMarble(m, ['#fde047', '#f59e0b', '#dc2626', '#fff']);
+          VOICES.sizzle(0);
+          m._dead = true;
+        }
+      });
+      S.marbles = S.marbles.filter(m => !m._dead);
+
+      [...shop.querySelectorAll('.part:not([data-kind="marble"])')].forEach(el => {
+        const ex = (parseFloat(el.style.left) || 0) + 45;
+        const ey = (parseFloat(el.style.top)  || 0) + 45;
+        if (Math.hypot(ex - scx, ey - scy) < burnR) {
+          if (el.dataset.kind === 'rocket') explodeRocket(el);
+          else destroyByFireLocal(el);
+        }
+      });
+    }
+  }
 
   S.physicsHandle = requestAnimationFrame(physicsLoop);
 }
