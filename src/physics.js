@@ -3,7 +3,7 @@
 import {
   S, shop, world, WORLD_W, WORLD_H, EMPOWER_MS,
   PART_RADIUS, MARBLE_RADIUS, FIREBALL_RADIUS, GRAVITY, FRICTION,
-  volcanoNext, robotState, mouseState, eggState, dinoState
+  volcanoNext, robotState, rocketState, mouseState, eggState, dinoState
 } from './state.js';
 import { PARTS } from './parts.js';
 import { VOICES } from './audio.js';
@@ -13,8 +13,14 @@ import { spawnPartLocal } from './spawn.js';
 export function startPhysics() {
   S.marbles.length = 0;
   S.fireballs.length = 0;
+  S.meteors.forEach(mt => mt.el.remove());
+  S.meteors.length = 0;
+  S.meteorNext = 0;
+  S.meteorStormUntil = 0;
+  S.meteorSpawnAt = 0;
   volcanoNext.clear();
   robotState.clear();
+  rocketState.clear();
   mouseState.clear();
   eggState.clear();
   dinoState.clear();
@@ -33,10 +39,12 @@ export function startPhysics() {
 
   const hasVolcano = !!shop.querySelector('.part[data-kind="volcano"]');
   const hasRobot   = !!shop.querySelector('.part[data-kind="robot"]');
+  const hasRocket  = !!shop.querySelector('.part[data-kind="rocket"]');
   const hasMouse   = !!shop.querySelector('.part[data-kind="mouse"]');
   const hasEgg     = !!shop.querySelector('.part[data-kind="dinoEgg"], .part[data-kind="tRexEgg"], .part[data-kind="mouseEgg"]');
   const hasDino    = !!shop.querySelector('.part[data-kind="dino"], .part[data-kind="tRex"]');
-  if (!S.marbles.length && !hasVolcano && !hasRobot && !hasMouse && !hasEgg && !hasDino) return;
+  const inSpace    = document.body.dataset.theme === 'space';
+  if (!S.marbles.length && !hasVolcano && !hasRobot && !hasRocket && !hasMouse && !hasEgg && !hasDino && !inSpace) return;
 
   S.lastFrame = performance.now();
   S.physicsHandle = requestAnimationFrame(physicsLoop);
@@ -48,8 +56,11 @@ export function stopPhysics() {
   S.marbles.length = 0;
   S.fireballs.forEach(f => f.el.remove());
   S.fireballs.length = 0;
+  S.meteors.forEach(mt => mt.el.remove());
+  S.meteors.length = 0;
   volcanoNext.clear();
   robotState.clear();
+  rocketState.clear();
   mouseState.clear();
   eggState.clear();
   dinoState.clear();
@@ -102,6 +113,52 @@ function eruptVolcano(v) {
     { duration: 200 }
   );
   VOICES.boom(0);
+}
+
+// A single fading exhaust puff behind a boosting rocket.
+function spawnPuff(x, y) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = x + 'px';
+  p.style.top  = y + 'px';
+  p.style.background = Math.random() < 0.5 ? '#f59e0b' : '#fde047';
+  world.appendChild(p);
+  p.animate(
+    [{ transform: 'translate(0,0) scale(1)', opacity: .9 },
+     { transform: `translate(${(Math.random() - 0.5) * 18}px, ${8 + Math.random() * 14}px) scale(.3)`, opacity: 0 }],
+    { duration: 360 + Math.random() * 200, easing: 'ease-out' }
+  ).onfinish = () => p.remove();
+}
+
+function spawnMeteor(W) {
+  const el = document.createElement('div');
+  el.className = 'meteor';
+  const fromRight = Math.random() < 0.5;
+  const x = Math.random() * (W + 200) - 100;
+  const y = -50;
+  const vx = (fromRight ? -1 : 1) * (1.5 + Math.random() * 2.5);
+  const vy = 7 + Math.random() * 4.5;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  el.style.transform = `rotate(${Math.atan2(vy, vx) * 180 / Math.PI}deg)`;
+  world.appendChild(el);
+  S.meteors.push({ el, x, y, vx, vy });
+}
+
+function explodeRocket(el) {
+  if (!el.isConnected) return;
+  const x = (parseFloat(el.style.left) || 0) + 45;
+  const y = (parseFloat(el.style.top)  || 0) + 45;
+  particleBurst(x, y, ['#f59e0b', '#fde047', '#ef4444', '#9ca3af', '#fff']);
+  VOICES.boom(0);
+  const rs = rocketState.get(el.dataset.id);
+  if (rs && rs.targetEl) delete rs.targetEl.dataset.grabbed;
+  rocketState.delete(el.dataset.id);
+  el.animate(
+    [{ transform: 'scale(1) rotate(0)', opacity: 1 },
+     { transform: 'scale(1.5) rotate(40deg)', opacity: 0 }],
+    { duration: 320, easing: 'ease-out' }
+  ).onfinish = () => el.remove();
 }
 
 function physicsLoop(now) {
@@ -405,6 +462,7 @@ function physicsLoop(now) {
         const candidates = obstacles.filter(o =>
           o !== r &&
           o.kind !== 'robot' &&
+          o.kind !== 'rocket' &&
           o.kind !== 'mouse' &&
           o.kind !== 'cheese' &&
           o.kind !== 'lava' &&
@@ -552,6 +610,124 @@ function physicsLoop(now) {
         }
         break;
       }
+    }
+  }
+
+  // --- Rockets: fly around, ferry parts elsewhere, occasionally boost ---
+  const rocketEls = [...shop.querySelectorAll('.part[data-kind="rocket"]')];
+  const GRAB_EXCLUDE = new Set([
+    'rocket', 'robot', 'marble', 'mouse', 'cheese', 'cucumber',
+    'lava', 'volcano', 'dino', 'tRex', 'mouseEgg', 'dinoEgg', 'tRexEgg'
+  ]);
+  rocketEls.forEach(el => {
+    const id = el.dataset.id;
+    let rs = rocketState.get(id);
+    if (!rs) {
+      rs = {
+        vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
+        carrying: false, targetEl: null, dropX: 0, dropY: 0,
+        wx: null, wy: null, retargetAt: 0,
+        boostUntil: 0, nextBoostAt: now + 3000 + Math.random() * 4000
+      };
+      rocketState.set(id, rs);
+    }
+    const x = parseFloat(el.style.left) || 0;
+    const y = parseFloat(el.style.top)  || 0;
+    const cx = x + 45, cy = y + 45;
+
+    // Boost scheduling
+    if (now >= rs.nextBoostAt && rs.boostUntil < now) {
+      rs.boostUntil = now + 1200 + Math.random() * 900;
+      rs.nextBoostAt = now + 6000 + Math.random() * 6000;
+      el.classList.add('rocket-boost');
+      VOICES.vroom(0);
+    }
+    const boosting = rs.boostUntil > now;
+    if (!boosting) el.classList.remove('rocket-boost');
+
+    // Decide where to steer
+    let tx, ty;
+    if (rs.carrying && (!rs.targetEl || !rs.targetEl.isConnected)) {
+      rs.carrying = false; rs.targetEl = null;
+    }
+    if (rs.carrying) {
+      tx = rs.dropX; ty = rs.dropY;
+    } else {
+      const grabbedByOther = rs.targetEl && rs.targetEl.dataset.grabbed && rs.targetEl.dataset.grabbed !== id;
+      if (!rs.targetEl || !rs.targetEl.isConnected || grabbedByOther) {
+        const cands = [...shop.querySelectorAll('.part')].filter(p =>
+          p !== el && p.isConnected && !p.dataset.grabbed && !GRAB_EXCLUDE.has(p.dataset.kind));
+        rs.targetEl = cands.length ? cands[Math.floor(Math.random() * cands.length)] : null;
+      }
+      if (rs.targetEl) {
+        tx = (parseFloat(rs.targetEl.style.left) || 0) + 45;
+        ty = (parseFloat(rs.targetEl.style.top)  || 0) + 45;
+        if (Math.hypot(tx - cx, ty - cy) < 42) {
+          rs.targetEl.dataset.grabbed = id;
+          rs.carrying = true;
+          rs.dropX = 45 + Math.random() * Math.max(1, W - 90);
+          rs.dropY = 45 + Math.random() * Math.max(1, H - 90);
+          VOICES.beep(0);
+        }
+      } else {
+        // Nothing to ferry — wander between waypoints
+        if (rs.wx == null || now >= rs.retargetAt) {
+          rs.wx = 45 + Math.random() * Math.max(1, W - 90);
+          rs.wy = 45 + Math.random() * Math.max(1, H - 90);
+          rs.retargetAt = now + 1500 + Math.random() * 2000;
+        }
+        tx = rs.wx; ty = rs.wy;
+      }
+    }
+
+    // Steer: accelerate toward target, clamp to a max speed
+    const maxSpeed = boosting ? 13 : 4.2;
+    const accel    = boosting ? 1.1 : 0.35;
+    const dx = tx - cx, dy = ty - cy;
+    const d = Math.hypot(dx, dy) || 1;
+    rs.vx += (dx / d) * accel * dt;
+    rs.vy += (dy / d) * accel * dt;
+    const sp = Math.hypot(rs.vx, rs.vy);
+    if (sp > maxSpeed) { rs.vx = rs.vx / sp * maxSpeed; rs.vy = rs.vy / sp * maxSpeed; }
+    rs.vx *= 0.99; rs.vy *= 0.99;
+
+    let nx = x + rs.vx * dt;
+    let ny = y + rs.vy * dt;
+    if (nx < 0)      { nx = 0;      rs.vx = Math.abs(rs.vx) * 0.7; }
+    if (nx > W - 90) { nx = W - 90; rs.vx = -Math.abs(rs.vx) * 0.7; }
+    if (ny < 0)      { ny = 0;      rs.vy = Math.abs(rs.vy) * 0.7; }
+    if (ny > H - 90) { ny = H - 90; rs.vy = -Math.abs(rs.vy) * 0.7; }
+    el.style.left = nx + 'px';
+    el.style.top  = ny + 'px';
+
+    // Point the nose (svg drawn nose-up) along the flight direction
+    const core = el.querySelector('.core');
+    if (core) core.style.transform = `rotate(${Math.atan2(rs.vy, rs.vx) * 180 / Math.PI + 90}deg)`;
+
+    // Carry the grabbed part along, drop it when the destination is reached
+    if (rs.carrying && rs.targetEl && rs.targetEl.isConnected) {
+      rs.targetEl.style.left = Math.max(0, Math.min(W - 90, nx)) + 'px';
+      rs.targetEl.style.top  = Math.max(0, Math.min(H - 90, ny + 60)) + 'px';
+      if (Math.hypot(rs.dropX - (nx + 45), rs.dropY - (ny + 45)) < 40) {
+        delete rs.targetEl.dataset.grabbed;
+        hitPart(rs.targetEl, true);
+        rs.targetEl = null;
+        rs.carrying = false;
+      }
+    }
+
+    // Exhaust trail while boosting
+    if (boosting && Math.random() < 0.7) {
+      const tsp = Math.hypot(rs.vx, rs.vy) || 1;
+      spawnPuff(nx + 45 - rs.vx / tsp * 32, ny + 45 - rs.vy / tsp * 32);
+    }
+  });
+  const liveRocketIds = new Set(rocketEls.map(r => r.dataset.id));
+  for (const rid of rocketState.keys()) {
+    if (!liveRocketIds.has(rid)) {
+      const rs = rocketState.get(rid);
+      if (rs && rs.targetEl) delete rs.targetEl.dataset.grabbed;
+      rocketState.delete(rid);
     }
   }
 
@@ -726,6 +902,56 @@ function physicsLoop(now) {
       }
     }
   }
+
+  // --- Meteor storm (space level): hazard that blows up rockets ---
+  if (document.body.dataset.theme === 'space') {
+    if (!S.meteorNext) S.meteorNext = now + 2000 + Math.random() * 4000;
+    if (now >= S.meteorNext && now >= S.meteorStormUntil) {
+      S.meteorStormUntil = now + 2500 + Math.random() * 3500;            // storm lasts a few seconds
+      S.meteorNext       = S.meteorStormUntil + 6000 + Math.random() * 9000; // then a calm gap
+      VOICES.boom(0);
+    }
+    if (now < S.meteorStormUntil && now >= S.meteorSpawnAt) {
+      const n = 1 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < n; i++) spawnMeteor(W);
+      S.meteorSpawnAt = now + 220 + Math.random() * 260;
+    }
+  }
+
+  const meteorsToRemove = [];
+  S.meteors.forEach(mt => {
+    mt.x += mt.vx * dt;
+    mt.y += mt.vy * dt;
+    if (mt.y > H + 70 || mt.x < -90 || mt.x > W + 90) { meteorsToRemove.push(mt); return; }
+
+    for (const rEl of rocketEls) {
+      if (!rEl.isConnected) continue;
+      const rx = (parseFloat(rEl.style.left) || 0) + 45;
+      const ry = (parseFloat(rEl.style.top)  || 0) + 45;
+      if (Math.hypot(mt.x - rx, mt.y - ry) < 46) {
+        explodeRocket(rEl);
+        meteorsToRemove.push(mt);
+        break;
+      }
+    }
+    if (!meteorsToRemove.includes(mt)) {
+      for (const m of S.marbles) {
+        if (m._dead) continue;
+        if (Math.hypot(mt.x - (m.x + 45), mt.y - (m.y + 45)) < 40) {
+          explodeMarble(m, ['#f59e0b', '#fde047', '#7c2d12']);
+          m._dead = true;
+          meteorsToRemove.push(mt);
+          break;
+        }
+      }
+    }
+
+    mt.el.style.left = mt.x + 'px';
+    mt.el.style.top  = mt.y + 'px';
+  });
+  meteorsToRemove.forEach(mt => mt.el.remove());
+  S.meteors = S.meteors.filter(mt => !meteorsToRemove.includes(mt));
+  S.marbles = S.marbles.filter(m => !m._dead);
 
   S.physicsHandle = requestAnimationFrame(physicsLoop);
 }

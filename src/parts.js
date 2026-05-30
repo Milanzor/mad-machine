@@ -224,6 +224,20 @@ export const PARTS = {
       <rect x="22" y="82" width="56" height="10" rx="3" fill="#1f2937" stroke="#2a2118" stroke-width="2"/>
     </svg>`
   },
+  rocket: {
+    name: "Raket", anim: "", voice: "vroom",
+    svg: `<svg viewBox="0 0 100 100" class="core">
+      <path d="M 42 82 Q 50 104 58 82 Q 54 90 50 84 Q 46 90 42 82 Z" fill="#f59e0b" stroke="#2a2118" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M 45 82 Q 50 96 55 82 Z" fill="#fde047"/>
+      <path d="M 32 60 L 18 80 L 32 76 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M 68 60 L 82 80 L 68 76 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M 50 8 Q 68 26 68 60 L 68 80 L 32 80 L 32 60 Q 32 26 50 8 Z" fill="#e5e7eb" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M 50 8 Q 62 24 64 40 L 36 40 Q 38 24 50 8 Z" fill="#ef4444" stroke="#2a2118" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="32" y="66" width="36" height="6" fill="#ef4444"/>
+      <circle cx="50" cy="52" r="9" fill="#7dd3fc" stroke="#2a2118" stroke-width="3"/>
+      <circle cx="47" cy="49" r="2.5" fill="#fff" opacity=".85"/>
+    </svg>`
+  },
   mouseEgg: {
     name: "Muis-ei", anim: "anim-wiggle", voice: "ping", hatches: "mouse",
     svg: `<svg viewBox="0 0 100 100" class="core">

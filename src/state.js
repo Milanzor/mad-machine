@@ -45,6 +45,7 @@ export const machineName = document.getElementById("machineName");
 // Critter state maps
 export const volcanoNext = new Map();
 export const robotState  = new Map();
+export const rocketState = new Map();
 export const mouseState  = new Map();
 export const eggState    = new Map();
 export const dinoState   = new Map();
@@ -73,5 +74,9 @@ export const S = {
   weatherWind: 0,
   weatherDrag: 1,
   weatherTimer: null,
-  weatherSoundAt: 0
+  weatherSoundAt: 0,
+  meteors: [],
+  meteorNext: 0,
+  meteorStormUntil: 0,
+  meteorSpawnAt: 0
 };
