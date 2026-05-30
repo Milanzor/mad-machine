@@ -218,6 +218,7 @@ body.running .part[data-kind="marble"] { z-index: 50; }
   display: inline-grid; place-items: center;
 }
 .btn-undo { background: #14b8a6; }
+.btn-weather { background: #0ea5e9; }
 .btn-update {
   background: #06b6d4;
   font-size: 14px;
@@ -394,6 +395,102 @@ body.running .part[data-kind="marble"] { z-index: 50; }
   border: 2px solid #2a2118;
   border-radius: 8px;
 }
+.map-card.selected { outline: 4px solid #fbbf24; outline-offset: -2px; }
+
+/* Weather effects — painted on the world, behind the parts (z-index 2). */
+.weather-fx { position: absolute; pointer-events: none; }
+
+.wx-tint { inset: 0; z-index: 1; }
+.wx-tint-rain    { background: linear-gradient(rgba(30,58,95,.18), rgba(30,58,95,.30)); }
+.wx-tint-thunder { background: linear-gradient(rgba(15,23,42,.42), rgba(15,23,42,.58)); }
+.wx-tint-snow    { background: linear-gradient(rgba(224,242,254,.40), rgba(186,230,253,.15)); }
+.wx-tint-tornado { background: linear-gradient(rgba(68,64,60,.32), rgba(120,113,108,.20)); }
+
+/* Rain — diagonal streaks scrolled via background-position */
+.wx-rain {
+  inset: -20% 0; z-index: 1; opacity: .45;
+  background-image: repeating-linear-gradient(100deg, transparent 0 12px, rgba(191,219,254,.55) 12px 14px);
+  background-size: 70px 70px;
+  animation: wx-rain-fall .4s linear infinite;
+}
+.wx-rain-heavy { opacity: .7; animation-duration: .26s; }
+@keyframes wx-rain-fall { to { background-position: -90px 280px; } }
+
+/* Snow — three parallax flake layers drifting down */
+.wx-snow {
+  inset: -10% 0; z-index: 1; opacity: .9;
+  background-image:
+    radial-gradient(circle, #fff 2.5px, transparent 3.2px),
+    radial-gradient(circle, #fff 1.8px, transparent 2.4px),
+    radial-gradient(circle, rgba(255,255,255,.8) 1.2px, transparent 1.8px);
+  background-size: 110px 110px, 160px 160px, 80px 80px;
+  animation: wx-snow-fall 7s linear infinite;
+}
+@keyframes wx-snow-fall {
+  to { background-position: 30px 700px, -40px 700px, 20px 700px; }
+}
+
+/* Sunny — warm glow + a pulsing sun with rotating rays */
+.wx-sunny-glow {
+  inset: 0; z-index: 1;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(253,224,71,.55), rgba(253,224,71,0) 45%),
+    linear-gradient(rgba(254,243,199,.10), rgba(254,243,199,0));
+}
+.wx-sun { top: 5%; right: 7%; width: 110px; height: 110px; z-index: 1; }
+.wx-sun-core {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: radial-gradient(circle, #fff7cc 0%, #fde047 45%, #fbbf24 100%);
+  animation: wx-sun-pulse 4s ease-in-out infinite;
+}
+.wx-sun::before {
+  content: ''; position: absolute; inset: -32%;
+  background: repeating-conic-gradient(from 0deg, rgba(253,224,71,.5) 0deg 6deg, transparent 6deg 18deg);
+  border-radius: 50%; opacity: .5;
+  -webkit-mask: radial-gradient(circle, transparent 38%, #000 40%);
+  mask: radial-gradient(circle, transparent 38%, #000 40%);
+  animation: spin 20s linear infinite;
+}
+@keyframes wx-sun-pulse {
+  0%,100% { transform: scale(1);    box-shadow: 0 0 40px 14px rgba(251,191,36,.55); }
+  50%     { transform: scale(1.08); box-shadow: 0 0 60px 22px rgba(251,191,36,.80); }
+}
+
+/* Thunderstorm — full-world flash (flickers twice) */
+.wx-flash {
+  inset: 0; z-index: 90;
+  background: rgba(255,255,255,.85);
+  animation: wx-flash-fade .5s ease-out forwards;
+}
+@keyframes wx-flash-fade {
+  0% { opacity: 0; } 8% { opacity: .95; } 16% { opacity: .2; }
+  24% { opacity: .85; } 100% { opacity: 0; }
+}
+
+/* Tornado — swirling funnel that drifts across and a layer of blowing dust */
+.wx-tornado {
+  bottom: -4%; width: 200px; margin-left: -100px; z-index: 1; opacity: .85;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 0 10px rgba(68,64,60,.4));
+  animation: wx-tornado-move 9s ease-in-out infinite, wx-tornado-sway 1.2s ease-in-out infinite;
+}
+.wx-tornado svg { width: 100%; height: 100%; display: block; }
+@keyframes wx-tornado-move {
+  0%   { left: 18%; }
+  50%  { left: 78%; }
+  100% { left: 18%; }
+}
+@keyframes wx-tornado-sway {
+  0%,100% { transform: rotate(-3deg) scaleX(1); }
+  50%     { transform: rotate(3deg) scaleX(1.06); }
+}
+.wx-dust {
+  inset: 0; z-index: 1; opacity: .5;
+  background-image: repeating-linear-gradient(85deg, transparent 0 26px, rgba(120,113,108,.18) 26px 30px);
+  background-size: 200px 100%;
+  animation: wx-dust-blow .6s linear infinite;
+}
+@keyframes wx-dust-blow { to { background-position: 300px 0; } }
 
 /* Dinosaur is bigger than other parts */
 .part[data-kind="dino"] .core {

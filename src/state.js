@@ -67,5 +67,10 @@ export const S = {
   soundOn: true,
   audioCtx: null,
   history: [],
-  lastSnapJson: ""
+  lastSnapJson: "",
+  weather: "sunny",
+  weatherGravity: 1,
+  weatherWind: 0,
+  weatherDrag: 1,
+  weatherTimer: null
 };

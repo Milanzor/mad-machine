@@ -5,6 +5,7 @@ import { buildBinGrid } from './parts.js';
 import { attachBinItemHandlers } from './spawn.js';
 import { loadInitial } from './persistence.js';
 import { THEMES, applyTheme, showMapSelect, initMapSelect } from './themes.js';
+import { initWeatherSelect } from './weather.js';
 import { initUI } from './ui.js';
 import { initUpdateCheck } from './update-check.js';
 
@@ -29,6 +30,7 @@ window.addEventListener("resize", refreshWorldSize);
 buildBinGrid();
 attachBinItemHandlers();
 initMapSelect();
+initWeatherSelect();
 initUI();
 initUpdateCheck();
 

@@ -556,11 +556,16 @@ function physicsLoop(now) {
   }
 
   // --- Marbles ---
+  const wGrav = S.weatherGravity ?? 1;
+  const wWind = S.weatherWind ?? 0;
+  const wDrag = S.weatherDrag ?? 1;
   const marblesToRemove = [];
   S.marbles.forEach(m => {
-    m.vy += GRAVITY * dt;
+    m.vy += GRAVITY * wGrav * dt;
     m.vx *= FRICTION;
     m.vy *= FRICTION;
+    if (wDrag !== 1) { m.vx *= wDrag; m.vy *= wDrag; }
+    if (wWind) m.vx += Math.sin(now / 480 + m.y * 0.012) * wWind * dt;
     m.x += m.vx * dt;
     m.y += m.vy * dt;
 
